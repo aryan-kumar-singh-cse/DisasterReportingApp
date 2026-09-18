@@ -7,14 +7,8 @@ import DissonanceMeter from './DissonanceMeter';
 import { Layers, LocateFixed, Eye, ShieldAlert, Sparkles, Navigation, Globe, Loader2 } from 'lucide-react';
 
 // Tile Providers for layer switching
+// Tile Providers for layer switching (Satellite Aerial & Streets)
 const TILE_LAYERS = {
-  dark: {
-    name: 'Tactical Dark',
-    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; CARTO &copy; OpenStreetMap',
-    subdomains: 'abcd',
-    maxZoom: 20
-  },
   satellite: {
     name: 'Satellite Aerial',
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
@@ -23,7 +17,7 @@ const TILE_LAYERS = {
     maxZoom: 19
   },
   streets: {
-    name: 'OpenStreet',
+    name: 'Streets Nav',
     url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution: '&copy; OpenStreetMap contributors',
     subdomains: 'abc',
@@ -209,7 +203,7 @@ export default function ReportMap({
   onUserLocationFound = null,
   userGPS = null
 }) {
-  const [activeLayerKey, setActiveLayerKey] = useState('dark');
+  const [activeLayerKey, setActiveLayerKey] = useState('satellite');
   const [recenterFn, setRecenterFn] = useState(null);
   const [isLocatingGPS, setIsLocatingGPS] = useState(false);
   const [userGpsPosition, setUserGpsPosition] = useState(userGPS || null);
@@ -250,29 +244,18 @@ export default function ReportMap({
     return [19.0760, 72.8777]; // Mumbai center default
   }, [selectedReport, reports, searchLocation]);
 
-  const activeLayer = TILE_LAYERS[activeLayerKey] || TILE_LAYERS.dark;
+  const activeLayer = TILE_LAYERS[activeLayerKey] || TILE_LAYERS.satellite;
 
   return (
     <div className="w-full h-full min-h-[400px] relative z-0 flex-1 overflow-hidden bg-zinc-950">
       {/* Floating Layer & Recenter Controls Toolbar */}
       <div className="absolute top-3 right-3 z-[400] flex items-center gap-2 bg-zinc-950/90 backdrop-blur-md p-1.5 rounded-xl border border-zinc-800 shadow-2xl select-none flex-wrap max-w-full justify-end">
-        {/* Layer Switcher */}
+        {/* Layer Switcher (Satellite & Streets) */}
         <div className="flex items-center bg-zinc-900/90 p-0.5 rounded-lg border border-zinc-800">
           <button
             type="button"
-            onClick={() => setActiveLayerKey('dark')}
-            className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all flex items-center gap-1 ${
-              activeLayerKey === 'dark'
-                ? 'bg-zinc-800 text-cyan-300 shadow border border-cyan-500/40'
-                : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            <span>🌑 Dark</span>
-          </button>
-          <button
-            type="button"
             onClick={() => setActiveLayerKey('satellite')}
-            className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all flex items-center gap-1 ${
+            className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all flex items-center gap-1 cursor-pointer ${
               activeLayerKey === 'satellite'
                 ? 'bg-zinc-800 text-emerald-300 shadow border border-emerald-500/40'
                 : 'text-zinc-400 hover:text-white'
@@ -283,7 +266,7 @@ export default function ReportMap({
           <button
             type="button"
             onClick={() => setActiveLayerKey('streets')}
-            className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all flex items-center gap-1 ${
+            className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all flex items-center gap-1 cursor-pointer ${
               activeLayerKey === 'streets'
                 ? 'bg-zinc-800 text-amber-300 shadow border border-amber-500/40'
                 : 'text-zinc-400 hover:text-white'

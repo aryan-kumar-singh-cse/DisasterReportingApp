@@ -1,12 +1,44 @@
 /**
- * TwoTruths - Groq Ultra-Fast Tactical Commander Briefing Engine
- * Powered by Groq 120B
+ * ResQ - Groq & Gemini Crisis Intelligence Engine
+ * Powered by Groq 120B & Gemini Multi-modal Agents
  */
+
+export async function askCrisisAgent(message, history = [], location = 'Incident Area') {
+  if (!message) return null;
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, history, location })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.response) return data;
+    }
+  } catch (err) {
+    console.warn('API chat endpoint unavailable, utilizing internal heuristic agent:', err);
+  }
+
+  // Local fallback crisis intelligence
+  const query = message.toLowerCase();
+  let text = '';
+  if (/flood|water|rain|drain/i.test(query)) {
+    text = `🌊 **ResQ Flood Evacuation & Safety Advisory (${location})**\n\n1. Move to higher ground or reinforced concrete structures immediately.\n2. Do NOT cross moving waters on foot or vehicle (6 inches of water can sweep you away).\n3. Turn off main circuit breakers.\n4. Call **112** or NDRF **1078** for urgent water extraction.`;
+  } else if (/fire|smoke|flame/i.test(query)) {
+    text = `🔥 **ResQ Fire & Smoke Advisory (${location})**\n\n1. Evacuate immediately using emergency stairs. Do NOT take elevators.\n2. Crawl low under smoke to preserve breathable oxygen.\n3. Place damp cloth over mouth and nose.\n4. Call Fire Services **101** or **112**.`;
+  } else {
+    text = `🛡️ **ResQ Crisis Intelligence Directive (${location})**\n\n- Real-time telemetry monitoring is recommended.\n- Verify active claims with the ResQ Dissonance meter and Live Doppler radar.\n- For immediate search and rescue dispatch, dial **112**.`;
+  }
+
+  return { response: text, agent: 'ResQ Tactical Agent (Direct)' };
+}
 
 export async function generateTacticalBriefing(report) {
   if (!report) return null;
 
-  const prompt = `You are the Senior Emergency Dispatch Commander for TwoTruths Disaster Intelligence.
+  const prompt = `You are the Senior Emergency Dispatch Commander for ResQ Disaster Intelligence.
 Generate an immediate tactical incident briefing for this report:
 - Disaster: ${report.disasterType}
 - Location: ${report.locationName}
