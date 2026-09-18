@@ -38,5 +38,27 @@ body {
 }
 
 .leaflet-container {
-  font-family: inherit;
+  font-family: inherit !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100% !important;
+  background-color: #09090b !important;
+  z-index: 1 !important;
+}
+
+.custom-disaster-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+.leaflet-marker-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
+@keyframes ping {
+  75%, 100% {
+    transform: scale(2);
+    opacity: 0;
+  }
 }

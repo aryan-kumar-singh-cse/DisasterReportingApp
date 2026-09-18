@@ -1,8 +1,25 @@
+import { generateTacticalBriefing } from '../services/groqService';
+import { Zap, Loader2 } from 'lucide-react';
 import React from 'react';
 import { Shield, Users, ArrowUpRight, Flame, Droplets, Activity, Wrench } from 'lucide-react';
 import { getDissonanceZone } from '../data/schema';
 
 export default function ResponderTriageView({ reports = [], onSelectReport }) {
+  const [briefings, setBriefings] = React.useState({});
+  const [loadingBriefingId, setLoadingBriefingId] = React.useState(null);
+
+  const handleFetchBriefing = async (rep, e) => {
+    e.stopPropagation();
+    setLoadingBriefingId(rep.reportId);
+    try {
+      const text = await generateTacticalBriefing(rep);
+      setBriefings(prev => ({ ...prev, [rep.reportId]: text }));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingBriefingId(null);
+    }
+  };
   // Sort priority queue by Triage Score descending
   const sortedReports = [...reports].sort((a, b) => (b.triageScore || 0) - (a.triageScore || 0));
 

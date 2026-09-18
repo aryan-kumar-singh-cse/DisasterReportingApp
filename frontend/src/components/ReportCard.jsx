@@ -1,3 +1,4 @@
+import { generateTacticalBriefing } from '../services/groqService';
 import React from 'react';
 import { ThumbsUp, ThumbsDown, MessageSquare, MapPin, Clock, Users, X } from 'lucide-react';
 import DissonanceMeter from './DissonanceMeter';
@@ -12,6 +13,21 @@ export default function ReportCard({
   hasVoted
 }) {
   if (!report) return null;
+
+  const [briefing, setBriefing] = React.useState(null);
+  const [isGeneratingBriefing, setIsGeneratingBriefing] = React.useState(false);
+
+  const handleGenerateBriefing = async () => {
+    setIsGeneratingBriefing(true);
+    try {
+      const text = await generateTacticalBriefing(report);
+      setBriefing(text);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsGeneratingBriefing(false);
+    }
+  };
 
   const zone = getDissonanceZone(report.dissonanceScore || 0);
 
@@ -169,6 +185,35 @@ export default function ReportCard({
 
         {/* Evidence Chain Component */}
         <EvidenceChain report={report} />
+
+        
+        {/* Groq 120B Commander Dispatch Feature */}
+        <div className="p-3.5 rounded-xl bg-gradient-to-br from-zinc-900 to-zinc-950 border border-zinc-800 space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                <span className="text-orange-400 font-bold">⚡</span>
+                <span>Groq 120B Tactical Dispatch Directive</span>
+              </span>
+              <span className="text-[10px] text-zinc-400">Military-grade response directives for incident commanders</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleGenerateBriefing}
+              disabled={isGeneratingBriefing}
+              className="px-3 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold shadow-lg shadow-orange-600/30 flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-60"
+            >
+              {isGeneratingBriefing ? 'Computing 120B...' : '⚡ Generate Briefing'}
+            </button>
+          </div>
+
+          {briefing && (
+            <div className="p-3 rounded-lg bg-black/90 border border-orange-900/60 text-xs text-orange-200 font-mono leading-relaxed whitespace-pre-wrap">
+              {briefing}
+            </div>
+          )}
+        </div>
 
         {/* Challenge History (Dialogue rather than verdict) */}
         {report.challengeHistory && report.challengeHistory.length > 0 && (
