@@ -189,7 +189,13 @@ function createCustomPin(disasterType, dissonanceScore, isSelected) {
   });
 }
 
-export default function ReportMap({ reports = [], selectedReport, onSelectReport }) {
+export default function ReportMap({
+  reports = [],
+  selectedReport = null,
+  onSelectReport = () => {},
+  onOpenRadar = null,
+  onOpenLightning = null
+}) {
   const [activeLayerKey, setActiveLayerKey] = useState('dark');
   const [recenterFn, setRecenterFn] = useState(null);
 
@@ -252,10 +258,36 @@ export default function ReportMap({ reports = [], selectedReport, onSelectReport
             type="button"
             onClick={recenterFn}
             title="Recenter view on all incidents"
-            className="p-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 transition-colors flex items-center gap-1 text-[11px] font-medium"
+            className="p-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 transition-colors flex items-center gap-1 text-[11px] font-medium cursor-pointer"
           >
             <LocateFixed className="w-3.5 h-3.5 text-cyan-400" />
             <span className="hidden sm:inline">Fit All</span>
+          </button>
+        )}
+
+        {/* Doppler Radar Button */}
+        {onOpenRadar && (
+          <button
+            type="button"
+            onClick={onOpenRadar}
+            title="Live Doppler Weather Radar"
+            className="px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-cyan-950/60 text-cyan-300 border border-cyan-500/30 hover:border-cyan-400 transition-all flex items-center gap-1.5 text-[11px] font-semibold cursor-pointer shadow-sm"
+          >
+            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+            <span>🌧️ Radar</span>
+          </button>
+        )}
+
+        {/* Lightning Proximity Scope Button */}
+        {onOpenLightning && (
+          <button
+            type="button"
+            onClick={onOpenLightning}
+            title="IITM / DAMINI Lightning & Convective Analyzer"
+            className="px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-yellow-950/60 text-yellow-300 border border-yellow-500/30 hover:border-yellow-400 transition-all flex items-center gap-1.5 text-[11px] font-semibold cursor-pointer shadow-sm"
+          >
+            <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
+            <span>⚡ Lightning</span>
           </button>
         )}
       </div>

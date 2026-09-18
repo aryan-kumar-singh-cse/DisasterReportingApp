@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Plus, Map, ListOrdered, Radio } from 'lucide-react';
+import { Shield, Plus, Map, ListOrdered, Radio, CloudRain, Zap } from 'lucide-react';
 import { INITIAL_MOCK_REPORTS } from './data/mockReports';
 import { api } from './services/api';
 import DisagreementFeed from './components/DisagreementFeed';
@@ -9,6 +9,8 @@ import ResponderTriageView from './components/ResponderTriageView';
 import ReportFormModal from './components/ReportFormModal';
 import ChallengeModal from './components/ChallengeModal';
 import FilterBar from './components/FilterBar';
+import WeatherRadarModal from './components/WeatherRadarModal';
+import LightningTrackerModal from './components/LightningTrackerModal';
 
 export default function App() {
   const [reports, setReports] = useState(INITIAL_MOCK_REPORTS);
@@ -18,6 +20,19 @@ export default function App() {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [challengeReport, setChallengeReport] = useState(null);
   const [userVotes, setUserVotes] = useState({});
+  const [isRadarModalOpen, setIsRadarModalOpen] = useState(false);
+  const [isLightningModalOpen, setIsLightningModalOpen] = useState(false);
+  const [weatherTarget, setWeatherTarget] = useState(null);
+
+  const handleOpenRadar = (rep = null) => {
+    setWeatherTarget(rep || selectedReport || reports[0]);
+    setIsRadarModalOpen(true);
+  };
+
+  const handleOpenLightning = (rep = null) => {
+    setWeatherTarget(rep || selectedReport || reports[0]);
+    setIsLightningModalOpen(true);
+  };
 
   // Sync with remote API if reachable
   useEffect(() => {
@@ -130,8 +145,26 @@ export default function App() {
         {/* Right CTA */}
         <div className="flex items-center gap-2">
           <button
+            onClick={() => handleOpenRadar()}
+            title="Interactive Live Weather Radar & Synoptic Map (Precipitation, Wind, Heatmap)"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-950/60 hover:bg-cyan-900/60 text-cyan-300 border border-cyan-500/40 text-xs font-semibold shadow-sm transition-all cursor-pointer"
+          >
+            <CloudRain className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden sm:inline">Live Radar</span>
+          </button>
+
+          <button
+            onClick={() => handleOpenLightning()}
+            title="IITM / IMD DAMINI Lightning & Convective Risk Analyzer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-yellow-950/60 hover:bg-yellow-900/60 text-yellow-300 border border-yellow-500/40 text-xs font-semibold shadow-sm transition-all cursor-pointer"
+          >
+            <Zap className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400 animate-pulse" />
+            <span className="hidden sm:inline">Live Lightning</span>
+          </button>
+
+          <button
             onClick={() => setIsReportModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white text-xs font-bold shadow-lg shadow-red-600/20 transition-all active:scale-95"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white text-xs font-bold shadow-lg shadow-red-600/20 transition-all active:scale-95 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span className="hidden sm:inline">Report Disaster</span>
@@ -168,6 +201,8 @@ export default function App() {
                 reports={filteredReports}
                 selectedReport={selectedReport}
                 onSelectReport={setSelectedReport}
+                onOpenRadar={handleOpenRadar}
+                onOpenLightning={handleOpenLightning}
               />
             </div>
 
@@ -180,6 +215,8 @@ export default function App() {
                   onVote={handleVote}
                   onOpenChallenge={(rep) => setChallengeReport(rep)}
                   hasVoted={!!userVotes[selectedReport.reportId]}
+                  onOpenRadar={handleOpenRadar}
+                  onOpenLightning={handleOpenLightning}
                 />
               </div>
             )}
@@ -208,6 +245,30 @@ export default function App() {
         isOpen={!!challengeReport}
         onClose={() => setChallengeReport(null)}
         onSubmitChallenge={handleChallengeResolved}
+      />
+
+      {/* WeatherGPT Integrations: Live Weather Radar & Lightning Analyzer Modals */}
+      <WeatherRadarModal
+        isOpen={isRadarModalOpen}
+        onClose={() => setIsRadarModalOpen(false)}
+        city={weatherTarget?.locationName || selectedReport?.locationName || 'Incident Sector'}
+        lat={weatherTarget?.latitude ?? selectedReport?.latitude ?? 19.0760}
+        lng={weatherTarget?.longitude ?? selectedReport?.longitude ?? 72.8777}
+      />
+
+      <LightningTrackerModal
+        isOpen={isLightningModalOpen}
+        onClose={() => setIsLightningModalOpen(false)}
+        city={weatherTarget?.locationName || selectedReport?.locationName || 'Incident Sector'}
+        lat={weatherTarget?.latitude ?? selectedReport?.latitude ?? 19.0760}
+        lng={weatherTarget?.longitude ?? selectedReport?.longitude ?? 72.8777}
+        condition={
+          (weatherTarget || selectedReport)?.disasterType === 'FLOOD'
+            ? 'Severe Monsoonal Squall & Flood Surge'
+            : (weatherTarget || selectedReport)?.disasterType === 'FIRE'
+            ? 'Dry High-Wind Convective Heat Front'
+            : 'Unstable Atmospheric Storm Front'
+        }
       />
     </div>
   );

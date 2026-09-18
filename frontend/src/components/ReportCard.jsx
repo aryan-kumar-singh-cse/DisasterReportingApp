@@ -1,6 +1,6 @@
 import { generateTacticalBriefing } from '../services/groqService';
 import React from 'react';
-import { ThumbsUp, ThumbsDown, MessageSquare, MapPin, Clock, Users, X } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, MessageSquare, MapPin, Clock, Users, X, CloudRain, Zap } from 'lucide-react';
 import DissonanceMeter from './DissonanceMeter';
 import EvidenceChain from './EvidenceChain';
 import { getDissonanceZone } from '../data/schema';
@@ -10,7 +10,9 @@ export default function ReportCard({
   onClose,
   onVote,
   onOpenChallenge,
-  hasVoted
+  hasVoted,
+  onOpenRadar = null,
+  onOpenLightning = null
 }) {
   if (!report) return null;
 
@@ -235,6 +237,26 @@ export default function ReportCard({
             ))}
           </div>
         )}
+
+        {/* Live Weather Intelligence (Radar & Lightning) */}
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          <button
+            type="button"
+            onClick={() => onOpenRadar && onOpenRadar(report)}
+            className="py-2 px-3 rounded-xl bg-cyan-950/40 border border-cyan-500/40 hover:border-cyan-400 text-cyan-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all hover:bg-cyan-900/40 cursor-pointer shadow-sm"
+          >
+            <CloudRain className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Zone Doppler Radar</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => onOpenLightning && onOpenLightning(report)}
+            className="py-2 px-3 rounded-xl bg-yellow-950/40 border border-yellow-500/40 hover:border-yellow-400 text-yellow-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all hover:bg-yellow-900/40 cursor-pointer shadow-sm"
+          >
+            <Zap className="w-3.5 h-3.5 text-yellow-400" />
+            <span>Lightning Scan</span>
+          </button>
+        </div>
 
         {/* Challenge Flow Trigger */}
         {zone.label !== 'Aligned' && onOpenChallenge && (
