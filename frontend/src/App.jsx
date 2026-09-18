@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Plus, Map, ListOrdered, Radio, CloudRain, Zap } from 'lucide-react';
+import { Shield, Plus, Map, ListOrdered, Radio, CloudRain, Zap, Globe } from 'lucide-react';
 import { INITIAL_MOCK_REPORTS } from './data/mockReports';
 import { api } from './services/api';
 import DisagreementFeed from './components/DisagreementFeed';
@@ -11,6 +11,8 @@ import ChallengeModal from './components/ChallengeModal';
 import FilterBar from './components/FilterBar';
 import WeatherRadarModal from './components/WeatherRadarModal';
 import LightningTrackerModal from './components/LightningTrackerModal';
+import LocationSearchBar from './components/LocationSearchBar';
+import DisasterGlobeModal from './components/DisasterGlobeModal';
 
 export default function App() {
   const [reports, setReports] = useState(INITIAL_MOCK_REPORTS);
@@ -22,7 +24,32 @@ export default function App() {
   const [userVotes, setUserVotes] = useState({});
   const [isRadarModalOpen, setIsRadarModalOpen] = useState(false);
   const [isLightningModalOpen, setIsLightningModalOpen] = useState(false);
+  const [isGlobeModalOpen, setIsGlobeModalOpen] = useState(false);
+  const [searchLocation, setSearchLocation] = useState(null);
+  const [userGPS, setUserGPS] = useState(null);
+  const [isGpsLocating, setIsGpsLocating] = useState(false);
   const [weatherTarget, setWeatherTarget] = useState(null);
+
+  const handleDirectGPS = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser");
+      return;
+    }
+    setIsGpsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude, accuracy } = pos.coords;
+        const gpsObj = { lat: latitude, lng: longitude, accuracy, zoom: 15 };
+        setUserGPS(gpsObj);
+        setIsGpsLocating(false);
+      },
+      (err) => {
+        setIsGpsLocating(false);
+        alert("Could not access your GPS location. Please check browser permissions.");
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
 
   const handleOpenRadar = (rep = null) => {
     setWeatherTarget(rep || selectedReport || reports[0]);
@@ -116,34 +143,58 @@ export default function App() {
           </div>
         </div>
 
+        {/* WeatherGPT Style Live Location Search Bar */}
+        <div className="w-48 sm:w-60 md:w-72 lg:w-80 shrink-0">
+          <LocationSearchBar
+            onSelectLocation={(loc) => {
+              setSearchLocation(loc);
+              if (viewMode !== 'citizen') setViewMode('citizen');
+            }}
+            onUseCurrentLocation={handleDirectGPS}
+            isLocating={isGpsLocating}
+          />
+        </div>
+
         {/* Center View Toggle: Citizen View ⇄ Responder View */}
         <div className="flex items-center bg-zinc-900 p-1 rounded-xl border border-zinc-800">
           <button
             onClick={() => setViewMode('citizen')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               viewMode === 'citizen'
                 ? 'bg-zinc-800 text-white shadow'
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
             <Map className="w-3.5 h-3.5" />
-            <span>Citizen Map</span>
+            <span className="hidden md:inline">Citizen Map</span>
+            <span className="md:hidden">Map</span>
           </button>
           <button
             onClick={() => setViewMode('responder')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               viewMode === 'responder'
                 ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30'
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
             <ListOrdered className="w-3.5 h-3.5" />
-            <span>Responder Triage</span>
+            <span className="hidden md:inline">Responder Triage</span>
+            <span className="md:hidden">Triage</span>
           </button>
         </div>
 
         {/* Right CTA */}
         <div className="flex items-center gap-2">
+          {/* 3D Planetary Globe Trigger */}
+          <button
+            onClick={() => setIsGlobeModalOpen(true)}
+            title="Interactive 3D Planetary Disaster Globe (NASA Blue Marble)"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-950/60 hover:bg-indigo-900/60 text-indigo-300 border border-indigo-500/40 text-xs font-semibold shadow-sm transition-all cursor-pointer"
+          >
+            <Globe className="w-3.5 h-3.5 text-indigo-400" />
+            <span className="hidden lg:inline">3D Globe</span>
+          </button>
+
           <button
             onClick={() => handleOpenRadar()}
             title="Interactive Live Weather Radar & Synoptic Map (Precipitation, Wind, Heatmap)"
@@ -203,6 +254,10 @@ export default function App() {
                 onSelectReport={setSelectedReport}
                 onOpenRadar={handleOpenRadar}
                 onOpenLightning={handleOpenLightning}
+                onOpenGlobe={() => setIsGlobeModalOpen(true)}
+                searchLocation={searchLocation}
+                userGPS={userGPS}
+                onUserLocationFound={setUserGPS}
               />
             </div>
 
@@ -269,6 +324,18 @@ export default function App() {
             ? 'Dry High-Wind Convective Heat Front'
             : 'Unstable Atmospheric Storm Front'
         }
+      />
+
+      {/* WeatherGPT 3D Planetary Disaster Globe */}
+      <DisasterGlobeModal
+        isOpen={isGlobeModalOpen}
+        onClose={() => setIsGlobeModalOpen(false)}
+        reports={filteredReports}
+        selectedReport={selectedReport}
+        onSelectReport={(rep) => {
+          setSelectedReport(rep);
+          if (viewMode !== 'citizen') setViewMode('citizen');
+        }}
       />
     </div>
   );

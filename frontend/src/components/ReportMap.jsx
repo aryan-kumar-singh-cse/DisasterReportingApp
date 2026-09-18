@@ -4,7 +4,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { getDissonanceZone } from '../data/schema';
 import DissonanceMeter from './DissonanceMeter';
-import { Layers, LocateFixed, Eye, ShieldAlert, Sparkles } from 'lucide-react';
+import { Layers, LocateFixed, Eye, ShieldAlert, Sparkles, Navigation, Globe, Loader2 } from 'lucide-react';
 
 // Tile Providers for layer switching
 const TILE_LAYERS = {
@@ -56,8 +56,8 @@ function MapResizeHandler({ selectedReportId }) {
   return null;
 }
 
-// Smooth camera controller when selecting reports
-function MapFlyController({ selectedReport }) {
+// Smooth camera controller when selecting reports or flying to GPS / search target
+function MapFlyController({ selectedReport, flyTarget }) {
   const map = useMap();
 
   useEffect(() => {
@@ -68,6 +68,15 @@ function MapFlyController({ selectedReport }) {
       });
     }
   }, [selectedReport, map]);
+
+  useEffect(() => {
+    if (flyTarget && typeof flyTarget.lat === 'number' && typeof flyTarget.lng === 'number') {
+      map.flyTo([flyTarget.lat, flyTarget.lng], flyTarget.zoom || 14, {
+        duration: 1.5,
+        easeLinearity: 0.25
+      });
+    }
+  }, [flyTarget, map]);
 
   return null;
 }
@@ -194,12 +203,44 @@ export default function ReportMap({
   selectedReport = null,
   onSelectReport = () => {},
   onOpenRadar = null,
-  onOpenLightning = null
+  onOpenLightning = null,
+  onOpenGlobe = null,
+  searchLocation = null,
+  onUserLocationFound = null,
+  userGPS = null
 }) {
   const [activeLayerKey, setActiveLayerKey] = useState('dark');
   const [recenterFn, setRecenterFn] = useState(null);
+  const [isLocatingGPS, setIsLocatingGPS] = useState(false);
+  const [userGpsPosition, setUserGpsPosition] = useState(userGPS || null);
+
+  const handleLiveGPS = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser");
+      return;
+    }
+    setIsLocatingGPS(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude, accuracy } = pos.coords;
+        const gpsObj = { lat: latitude, lng: longitude, accuracy, zoom: 15 };
+        setUserGpsPosition(gpsObj);
+        setIsLocatingGPS(false);
+        if (onUserLocationFound) onUserLocationFound(gpsObj);
+      },
+      (err) => {
+        setIsLocatingGPS(false);
+        console.warn(err);
+        alert("Could not access your GPS location. Please check browser permissions.");
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
 
   const defaultCenter = useMemo(() => {
+    if (searchLocation?.lat && searchLocation?.lng) {
+      return [searchLocation.lat, searchLocation.lng];
+    }
     if (selectedReport?.latitude && selectedReport?.longitude) {
       return [selectedReport.latitude, selectedReport.longitude];
     }
@@ -207,14 +248,14 @@ export default function ReportMap({
       return [reports[0].latitude, reports[0].longitude];
     }
     return [19.0760, 72.8777]; // Mumbai center default
-  }, [selectedReport, reports]);
+  }, [selectedReport, reports, searchLocation]);
 
   const activeLayer = TILE_LAYERS[activeLayerKey] || TILE_LAYERS.dark;
 
   return (
     <div className="w-full h-full min-h-[400px] relative z-0 flex-1 overflow-hidden bg-zinc-950">
       {/* Floating Layer & Recenter Controls Toolbar */}
-      <div className="absolute top-3 right-3 z-[400] flex items-center gap-2 bg-zinc-950/90 backdrop-blur-md p-1.5 rounded-xl border border-zinc-800 shadow-2xl select-none">
+      <div className="absolute top-3 right-3 z-[400] flex items-center gap-2 bg-zinc-950/90 backdrop-blur-md p-1.5 rounded-xl border border-zinc-800 shadow-2xl select-none flex-wrap max-w-full justify-end">
         {/* Layer Switcher */}
         <div className="flex items-center bg-zinc-900/90 p-0.5 rounded-lg border border-zinc-800">
           <button
@@ -251,6 +292,39 @@ export default function ReportMap({
             <span>🗺️ Streets</span>
           </button>
         </div>
+
+        {/* Live GPS Button (WeatherGPT Style) */}
+        <button
+          type="button"
+          onClick={handleLiveGPS}
+          disabled={isLocatingGPS}
+          title="Fly to your exact live GPS location"
+          className={`px-2.5 py-1 rounded-lg border transition-all flex items-center gap-1.5 text-[11px] font-semibold cursor-pointer shadow-sm ${
+            isLocatingGPS
+              ? 'bg-cyan-500/25 border-cyan-400 text-cyan-200 animate-pulse'
+              : 'bg-zinc-900 hover:bg-cyan-950/60 text-cyan-300 border-zinc-800 hover:border-cyan-500/40'
+          }`}
+        >
+          {isLocatingGPS ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-400" />
+          ) : (
+            <Navigation className="w-3.5 h-3.5 text-cyan-400" />
+          )}
+          <span className="hidden sm:inline">{isLocatingGPS ? 'Locating...' : 'My GPS'}</span>
+        </button>
+
+        {/* 3D Globe Button */}
+        {onOpenGlobe && (
+          <button
+            type="button"
+            onClick={onOpenGlobe}
+            title="Open 3D Planetary Disaster Globe"
+            className="px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-indigo-950/60 text-indigo-300 border border-zinc-800 hover:border-indigo-500/40 transition-all flex items-center gap-1.5 text-[11px] font-semibold cursor-pointer shadow-sm"
+          >
+            <Globe className="w-3.5 h-3.5 text-indigo-400" />
+            <span className="hidden sm:inline">3D Globe</span>
+          </button>
+        )}
 
         {/* Recenter View Button */}
         {recenterFn && (
@@ -298,7 +372,7 @@ export default function ReportMap({
         zoom={11}
         scrollWheelZoom={true}
         className="w-full h-full min-h-[400px]"
-        style={{ width: '100%', height: '100%', minHeight: '100%', background: '#09090b' }}
+        style={{ width: '100%', height: '100%', minHeight: '100%', background: '#05070d' }}
       >
         <TileLayer
           key={activeLayerKey}
@@ -310,8 +384,71 @@ export default function ReportMap({
 
         {/* Controllers */}
         <MapResizeHandler selectedReportId={selectedReport?.reportId} />
-        <MapFlyController selectedReport={selectedReport} />
+        <MapFlyController
+          selectedReport={selectedReport}
+          flyTarget={userGpsPosition || (searchLocation ? { lat: searchLocation.lat, lng: searchLocation.lng, zoom: 14 } : null)}
+        />
         <RecenterController reports={reports} onRecenterReady={setRecenterFn} />
+
+        {/* Live User GPS Pulsing Pin */}
+        {userGpsPosition && (
+          <Marker
+            position={[userGpsPosition.lat, userGpsPosition.lng]}
+            icon={L.divIcon({
+              className: 'custom-disaster-marker',
+              html: `
+                <div style="position: relative; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;">
+                  <div style="position: absolute; width: 34px; height: 34px; border-radius: 50%; background: rgba(6, 182, 212, 0.45); animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+                  <div style="position: absolute; width: 22px; height: 22px; border-radius: 50%; background: rgba(6, 182, 212, 0.6);"></div>
+                  <div style="width: 14px; height: 14px; border-radius: 50%; background: #06b6d4; border: 2.5px solid #ffffff; box-shadow: 0 0 12px #06b6d4;"></div>
+                </div>
+              `,
+              iconSize: [34, 34],
+              iconAnchor: [17, 17]
+            })}
+          >
+            <Popup className="dark-popup">
+              <div className="p-1 text-xs text-zinc-100">
+                <span className="font-bold text-cyan-400 block mb-1">🎯 Your Exact GPS Position</span>
+                <span className="text-[10px] font-mono text-zinc-300 block">
+                  {userGpsPosition.lat.toFixed(5)}°N, {userGpsPosition.lng.toFixed(5)}°E
+                </span>
+                {userGpsPosition.accuracy && (
+                  <span className="text-[9px] text-zinc-400 font-mono">
+                    Accuracy: ±{Math.round(userGpsPosition.accuracy)}m
+                  </span>
+                )}
+              </div>
+            </Popup>
+          </Marker>
+        )}
+
+        {/* Target Search Marker */}
+        {searchLocation && (
+          <Marker
+            position={[searchLocation.lat, searchLocation.lng]}
+            icon={L.divIcon({
+              className: 'custom-disaster-marker',
+              html: `
+                <div style="position: relative; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;">
+                  <div style="position: absolute; width: 34px; height: 34px; border-radius: 50%; background: rgba(16, 185, 129, 0.4); animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+                  <div style="width: 14px; height: 14px; border-radius: 50%; background: #10b981; border: 2.5px solid #ffffff; box-shadow: 0 0 12px #10b981;"></div>
+                </div>
+              `,
+              iconSize: [34, 34],
+              iconAnchor: [17, 17]
+            })}
+          >
+            <Popup className="dark-popup">
+              <div className="p-1 text-xs text-zinc-100">
+                <span className="font-bold text-emerald-400 block mb-1">📍 {searchLocation.name || 'Searched Hub'}</span>
+                <span className="text-[10px] font-mono text-zinc-300 block">
+                  {searchLocation.lat.toFixed(4)}°N, {searchLocation.lng.toFixed(4)}°E
+                </span>
+              </div>
+            </Popup>
+          </Marker>
+        )}
 
         {/* Markers */}
         {reports.map((rep) => {
