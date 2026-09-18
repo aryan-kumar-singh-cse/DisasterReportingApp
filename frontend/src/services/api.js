@@ -85,8 +85,7 @@ export async function submitReport(reportData) {
     }
   }
 
-  // Local fallback simulation (including simulated AI assessment)
-  const isConsistent = ['Flood', 'Fire', 'Infrastructure Damage'].includes(reportData.disasterType);
+  // Local fallback — clearly marks report as NOT AI-assessed (backend offline)
   const newReport = {
     reportId: `rep-local-${Date.now()}`,
     disasterType: reportData.disasterType,
@@ -96,16 +95,14 @@ export async function submitReport(reportData) {
     longitude: reportData.longitude,
     locationName: reportData.locationName || 'Citizen GPS Location',
     userSeverity: reportData.userSeverity,
-    aiSeverity: reportData.userSeverity,
-    aiVerification: isConsistent ? 'CONSISTENT' : 'INCONCLUSIVE',
-    aiDetectedLabels: [
-      { name: reportData.disasterType, confidence: 94.2 },
-      { name: 'Disaster Area', confidence: 88.7 }
-    ],
-    verificationStatus: 'AI_ASSESSED',
+    aiSeverity: 'Unknown',
+    aiVerification: 'INCONCLUSIVE',
+    aiDetectedLabels: [],
+    verificationStatus: 'PENDING',
     confirmVotes: 0,
     disputeVotes: 0,
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    _offlineMode: true
   };
 
   localReports = [newReport, ...localReports];

@@ -13,6 +13,8 @@ export default function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState(null);
+  const [userLocation, setUserLocation] = useState(null);
+  const [locationStatus, setLocationStatus] = useState('Detecting location...');
 
   // Filters and sorting state
   const [filters, setFilters] = useState({
@@ -21,6 +23,29 @@ export default function App() {
     aiStatus: 'All'
   });
   const [sortBy, setSortBy] = useState('newest');
+
+  // Auto-detect user's live GPS location on app load
+  useEffect(() => {
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const loc = [position.coords.latitude, position.coords.longitude];
+          setUserLocation(loc);
+          setLocationStatus(`Live GPS: ${loc[0].toFixed(4)}, ${loc[1].toFixed(4)}`);
+        },
+        (err) => {
+          console.warn('GPS detection failed:', err.message);
+          setLocationStatus('GPS unavailable — showing default region');
+          // Fallback to a reasonable default
+          setUserLocation([19.0760, 72.8777]);
+        },
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+      );
+    } else {
+      setLocationStatus('Geolocation not supported');
+      setUserLocation([19.0760, 72.8777]);
+    }
+  }, []);
 
   // Load initial reports
   useEffect(() => {
@@ -85,6 +110,17 @@ export default function App() {
     }
   };
 
+  // Helper: calculate distance between two lat/lng points (km)
+  const getDistanceKm = (lat1, lon1, lat2, lon2) => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  };
+
   // Filter and sort reports
   const filteredReports = useMemo(() => {
     return reports
@@ -99,9 +135,14 @@ export default function App() {
           const weights = { Critical: 4, High: 3, Medium: 2, Low: 1 };
           return (weights[b.userSeverity] || 0) - (weights[a.userSeverity] || 0);
         }
+        if (sortBy === 'distance' && userLocation) {
+          const distA = getDistanceKm(userLocation[0], userLocation[1], a.latitude, a.longitude);
+          const distB = getDistanceKm(userLocation[0], userLocation[1], b.latitude, b.longitude);
+          return distA - distB;
+        }
         return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
       });
-  }, [reports, filters, sortBy]);
+  }, [reports, filters, sortBy, userLocation]);
 
   const selectedReport = reports.find((r) => r.reportId === selectedReportId);
 
@@ -199,6 +240,7 @@ export default function App() {
             reports={filteredReports}
             selectedReportId={selectedReportId}
             onSelectReport={(report) => setSelectedReportId(report.reportId)}
+            center={userLocation || [19.0760, 72.8777]}
           />
         </div>
 

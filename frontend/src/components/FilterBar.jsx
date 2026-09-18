@@ -108,6 +108,7 @@ export default function FilterBar({
           >
             <option value="newest">Sort: Newest First</option>
             <option value="severity">Sort: Highest Severity</option>
+            <option value="distance">Sort: Nearest to Me</option>
           </select>
         </div>
 
