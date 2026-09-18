@@ -20,6 +20,7 @@ import DissonanceMeter from './DissonanceMeter';
 import EvidenceChain from './EvidenceChain';
 import { getDissonanceZone } from '../data/schema';
 import { VERIFIED_DISASTER_NEWS } from '../data/verifiedNews';
+import { generateTacticalBriefing } from '../services/groqService';
 
 export default function ReportCard({
   report,
@@ -326,7 +327,7 @@ export default function ReportCard({
                       Gemini 2.0
                     </span>
                   </div>
-                  <span className={zone.color}>{zone.label}</span>
+                  <span style={{ color: zone.color }} className="font-bold">{zone.label}</span>
                 </div>
               </div>
             </div>

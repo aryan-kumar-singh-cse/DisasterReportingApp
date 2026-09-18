@@ -87,6 +87,15 @@ export default function DisasterGlobeView({
     }
   }, [searchLocation]);
 
+  // Smoothly rotate globe to face selected report when clicked anywhere (feed, cards, hotspots)
+  useEffect(() => {
+    if (selectedReport && typeof selectedReport.latitude === 'number' && typeof selectedReport.longitude === 'number') {
+      if (rotateToCoordsRef.current) {
+        rotateToCoordsRef.current(selectedReport.latitude, selectedReport.longitude);
+      }
+    }
+  }, [selectedReport?.reportId]);
+
   // Auto-dismiss GPS/Search notification after 5 seconds to keep globe clean
   useEffect(() => {
     if (liveGpsNotification) {
@@ -258,10 +267,13 @@ export default function DisasterGlobeView({
       const pos = latLngToVector3(rep.latitude, rep.longitude, 2.015);
       const isSelected = selectedReport?.reportId === rep.reportId;
 
-      let pinColor = 0x06b6d4; // cyan
-      if (rep.disasterType === 'FIRE') pinColor = 0xf43f5e; // red
-      else if (rep.disasterType === 'FLOOD') pinColor = 0x0ea5e9; // blue
-      else if ((rep.dissonanceScore || 0) >= 0.7) pinColor = 0xf59e0b; // amber
+      let pinColor = 0x06b6d4; // cyan default
+      const dt = (rep.disasterType || '').toLowerCase();
+      if ((rep.dissonanceScore || 0) >= 0.7) pinColor = 0xf59e0b; // amber for high dissonance
+      else if (dt === 'fire') pinColor = 0xf43f5e; // vibrant red
+      else if (dt === 'flood') pinColor = 0x0ea5e9; // vivid blue
+      else if (dt === 'earthquake') pinColor = 0xa855f7; // purple
+      else if (dt.includes('infrastructure')) pinColor = 0xeab308; // amber-yellow
 
       // Delicate vertical needle stem
       const pinStemGeo = new THREE.CylinderGeometry(0.002, 0.002, 0.035, 6);
@@ -715,7 +727,17 @@ export default function DisasterGlobeView({
                   : 'bg-zinc-900/60 border-zinc-800/80 text-zinc-300 hover:border-zinc-700 hover:text-white'
               }`}
             >
-              <span className={`w-1.5 h-1.5 rounded-full ${rep.disasterType === 'FIRE' ? 'bg-red-400' : 'bg-cyan-400'}`} />
+              <span className={`w-1.5 h-1.5 rounded-full ${
+                (rep.dissonanceScore || 0) >= 0.7
+                  ? 'bg-amber-400'
+                  : (rep.disasterType || '').toLowerCase() === 'fire'
+                  ? 'bg-red-400'
+                  : (rep.disasterType || '').toLowerCase() === 'flood'
+                  ? 'bg-blue-400'
+                  : (rep.disasterType || '').toLowerCase() === 'earthquake'
+                  ? 'bg-purple-400'
+                  : 'bg-cyan-400'
+              }`} />
               <span>{rep.locationName.split(',')[0]}</span>
             </button>
           );

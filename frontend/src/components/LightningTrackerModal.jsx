@@ -288,6 +288,15 @@ export default function LightningTrackerModal({
     };
   }, [isOpen, activeTab, strikeEvents]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKey = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const {
@@ -323,8 +332,8 @@ export default function LightningTrackerModal({
   }[riskLevel];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-4 bg-black/85 backdrop-blur-xl animate-fade-in">
-      <div className="relative w-full max-w-2xl rounded-3xl bg-zinc-950/95 border border-yellow-400/40 shadow-2xl shadow-yellow-400/10 overflow-hidden flex flex-col max-h-[92vh]">
+    <div onClick={onClose} className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-4 bg-black/85 backdrop-blur-xl animate-fade-in">
+      <div onClick={(e) => e.stopPropagation()} className="relative w-full max-w-2xl rounded-3xl bg-zinc-950/95 border border-yellow-400/40 shadow-2xl shadow-yellow-400/10 overflow-hidden flex flex-col max-h-[92vh]">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-yellow-400/[0.04]">
           <div className="flex items-center gap-3">

@@ -71,25 +71,128 @@ export async function askCrisisAgent(message, history = [], location = 'Incident
 
 ### 📞 Emergency Dispatch Grid:
 - National Emergency Helpline: **112** | NDRF Disaster Response Force: **1078** | Ambulance: **108**`;
-  } else if (/fire|smoke|flame/i.test(query)) {
-    text = `🔥 **ResQ Fire & Structural Hazard Tactical Protocol**
+  } else if (/earthquake|tremor|quake|seismic|ground shaking/i.test(query)) {
+    text = `🏢 **ResQ Earthquake & Seismic Hazard Protocol**
 
-### 🚨 Immediate Evacuation Directives:
-1. **Sound Alarm & Evacuate**: Pull building pull-stations and evacuate immediately via designated fire staircases. **NEVER use elevators**.
-2. **Crawl Under Smoke**: Stay within 12–24 inches of the floor where oxygen is cleanest and temperatures are lowest.
-3. **Door Safety Test**: Before opening any closed door, touch the knob and frame with the back of your hand.
-4. **Airway Protection**: Place a damp cloth firmly over mouth and nose.
+### 🚨 1. Immediate Life-Safety Actions (Drop, Cover, Hold On)
+1. **DROP**: Drop down onto hands and knees immediately to prevent being knocked over by primary P/S wave jolts.
+2. **COVER**: Cover head and neck under a sturdy desk or table. If no shelter nearby, crawl next to an interior load-bearing wall away from glass windows.
+3. **HOLD ON**: Hold onto your shelter until shaking completely stops.
+4. **DO NOT RUN OUTSIDE**: Falling facade masonry, glass shards, and power lines cause over 75% of urban earthquake injuries.
 
-### 📞 Priority Emergency Lines:
-- Fire & Rescue Services: **101** | National Emergency Command: **112**`;
+---
+
+### ⚠️ 2. Post-Shaking Infrastructure Checklist
+- **Gas Leaks**: Do NOT flick electrical light switches or strike matches. If gas odor is detected, turn off main cylinder/piped valve and ventilate.
+- **Structural Integrity**: Check for deep diagonal wall fissures or buckled columns before re-entering buildings.
+- **Aftershock Preparedness**: Secondary aftershocks frequently occur within 2–72 hours of significant quakes.
+
+---
+
+### 📞 Priority Emergency Lines
+- National Emergency Helpline: **112**
+- National Center for Seismology (NCS): **011-24619943**
+- NDRF Disaster Response Force: **1078**`;
+  } else if (/cyclone|hurricane|typhoon|storm surge|high wind/i.test(query)) {
+    text = `🌀 **ResQ Cyclone & Severe Storm Surge Directives**
+
+### 📡 1. Coastal & Inland Defense Strategy
+- **Secure Loose Objects**: Fasten outdoor sheet roofing, antennas, signage, and construction hoardings that turn into deadly projectiles in 90+ km/h winds.
+- **Inland Movement**: Move at least 2 km away from tidal rivers or open seafronts to avoid storm surge waves.
+- **The Eye Caution**: If wind suddenly dies down to zero, you may be in the cyclone's eye. Severe reverse winds will return within 15–45 minutes.
+
+---
+
+### 🛡️ 2. Essential Preparedness
+- Keep emergency radio or mobile tuned to IMD/NDMA warning bulletins.
+- Fill clean bathtubs and containers with potable water before municipal supply is cut.
+- Monitor incoming precipitation cells via **ResQ Live Radar**.
+
+---
+
+### 📞 Emergency Dispatch
+- India Meteorological Department (IMD) Cyclone Warning: **1800-180-1717**
+- National Disaster Response Helpline: **112** | **1078**`;
+  } else if (/landslide|mudslide|rockfall|wayanad|hill/i.test(query)) {
+    text = `⛰️ **ResQ Landslide & Slope Instability Protocol**
+
+### 🚨 1. Critical Warning Signs
+- Sudden tilting of trees, utility poles, or retaining walls.
+- New cracks appearing in plaster, foundations, or road asphalt along hill slopes.
+- Water suddenly turning muddy in mountain streams or stopping completely (indicating an upstream debris dam).
+
+---
+
+### 🏃 2. Evacuation Directives
+1. **Evacuate Immediately**: Never sleep in ground-floor downhill rooms during continuous red-alert rainfall.
+2. **Move Across, Not Down**: If caught near a slope failure, run laterally away from the debris flow path rather than downhill.
+3. **Stay Off River Valleys**: Mudflows travel down valley floors at speeds exceeding 50 km/h.
+
+---
+
+### 📞 Contact Grid
+- Geological Survey of India (GSI) Landslide Cell
+- Disaster Response: **112** | State Emergency Operations: **1070**`;
+  } else if (/tsunami|sea wave|coastal flood/i.test(query)) {
+    text = `🌊 **ResQ Tsunami Coastal Evacuation Directive**
+
+### 🚨 Immediate Golden Rule:
+If you feel strong ground shaking near the coast OR observe seawater rapidly receding and exposing the seabed:
+**RUN TO HIGH GROUND IMMEDIATELY! Do NOT wait for an official siren!**
+
+1. **Elevation Target**: Reach at least 30 meters (100 ft) above sea level or move 2 km inland.
+2. **Multi-Wave Threat**: The first wave is rarely the largest. Waves continue arriving in dangerous surges for hours.
+3. **Never Go to the Beach**: Never observe incoming waves from shore; if you can see it, you cannot outrun it.
+
+---
+
+### 📞 Emergency Link:
+- INCOIS Tsunami Early Warning Center: **040-23895000** | **112**`;
+  } else if (/heat|heatwave|temperature|hot/i.test(query)) {
+    text = `☀️ **ResQ Extreme Heatwave & Thermal Safety Protocol**
+
+### 🌡️ Key Safety Rules:
+1. **Avoid Peak Exposure**: Strictly avoid strenuous outdoor work between 12:00 PM and 3:30 PM.
+2. **Hydration & Electrolytes**: Drink ORS, coconut water, lemon water, or buttermilk even before feeling thirsty.
+3. **Heatstroke Symptoms**: Red dry skin, rapid pulse, body temperature >40°C, delirium. Move victim to shade, apply ice packs to neck/armpits, and dial **108** immediately.`;
+  } else if (/chemical|gas leak|toxic|industrial leak/i.test(query)) {
+    text = `☣️ **ResQ Chemical & Hazardous Gas Leak Directive**
+
+### 🚨 Life-Safety Measures:
+1. **Upwind Evacuation**: Move immediately upwind and crosswind away from the vapor plume.
+2. **Shelter-In-Place**: If trapped indoors, close all windows, tape door seams, and shut down HVAC/AC systems immediately.
+3. **Airway Protection**: Cover nose and mouth with a wet, folded cloth.
+4. **Emergency Line**: Dial **112** and **101** immediately to alert NDRF CBRN specialized units.`;
+  } else if (/dissonance|fake|verification|ai evidence|how it works|score/i.test(query)) {
+    text = `🛡️ **How Only ResQ Dissonance Intelligence Works**
+
+### 🔬 Multi-Modal Verification Architecture:
+1. **Citizen Claim**: Ground observations submitted by eyewitnesses with GPS coordinates.
+2. **Computer Vision Audit**:
+   - **AWS Rekognition**: Detects physical object labels, confidence levels, and hazard categories.
+   - **Gemini 2.0 Vision**: Applies negative-space reasoning to check whether visual indicators match claimed disaster severity.
+3. **Dissonance Score Calculation**:
+   - **0.00 – 0.30 (Aligned)**: Photographic evidence confirms emergency claim. High dispatch priority.
+   - **0.31 – 0.69 (Partial)**: Ambiguous evidence or minor severity mismatch.
+   - **0.70 – 1.00 (Divergent)**: Visuals contradict the claim (e.g. domestic barbecue reported as structural wildfire). Routed to verification queue to preserve emergency rescue assets.`;
+  } else if (/emergency|helpline|number|contact|phone|call/i.test(query)) {
+    text = `📞 **National Emergency Operations & Disaster Contacts**
+
+- **National Unified Emergency**: **112** (Police, Fire, Medical, Disaster)
+- **NDRF Control Room (National)**: **1078** / **011-24363260**
+- **State Disaster Management (SDMA)**: **1070**
+- **Ambulance Services**: **108** | **102**
+- **Fire & Rescue**: **101**
+- **Coast Guard / Maritime Search & Rescue**: **1554**
+- **Disaster Psychological Support**: **080-46110007**`;
   } else {
-    text = `🛡️ **ResQ AI Crisis Intelligence Directive for ${location}**
+    text = `🛡️ **Only ResQ AI Crisis Intelligence Directive for ${location}**
 
 ### 📡 Telemetry Overview:
 - **Operational Status**: Real-time atmospheric, seismic, and incident feeds active.
-- **Telemetry Verification**: Use the **ResQ Dissonance Meter** to evaluate citizen ground claims against computer vision models.
-- **Live Doppler Radar**: Monitor precipitation and squall movement in the Live Radar view.
-- **Emergency Priority**: If lives are in immediate peril, dial national emergency **112** or local disaster dispatch immediately.`;
+- **Visual Evidence Auditing**: Ground claims verified against AWS Rekognition & Gemini Vision.
+- **Doppler Radar & Lightning**: Integrated ECMWF precipitation radar and DAMINI lightning sensors active.
+- **Tactical Action**: If lives are in immediate peril, dial unified emergency **112** or NDRF **1078** immediately.`;
   }
 
   return { response: text, agent: 'ResQ AI Tactical Core (Direct)' };

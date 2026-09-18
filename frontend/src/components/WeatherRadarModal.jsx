@@ -19,6 +19,15 @@ export default function WeatherRadarModal({
 }) {
   const [activeLayer, setActiveLayer] = useState('rain');
 
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const handleKey = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const layerParams = {
@@ -34,8 +43,8 @@ export default function WeatherRadarModal({
   const radarEmbedUrl = `https://embed.windy.com/embed2.html?lat=${safeLat}&lon=${safeLng}&detailLat=${safeLat}&detailLon=${safeLng}&width=650&height=450&zoom=7&level=surface&overlay=${layerParams[activeLayer] || 'rain'}&product=ecmwf&menu=&message=&marker=true&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1`;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-4 bg-black/85 backdrop-blur-xl animate-fade-in">
-      <div className="relative w-full max-w-4xl rounded-3xl bg-zinc-950/95 border border-cyan-500/40 shadow-2xl shadow-cyan-500/10 overflow-hidden flex flex-col max-h-[92vh]">
+    <div onClick={onClose} className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-4 bg-black/85 backdrop-blur-xl animate-fade-in">
+      <div onClick={(e) => e.stopPropagation()} className="relative w-full max-w-4xl rounded-3xl bg-zinc-950/95 border border-cyan-500/40 shadow-2xl shadow-cyan-500/10 overflow-hidden flex flex-col max-h-[92vh]">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-cyan-950/20">
           <div className="flex items-center gap-3">

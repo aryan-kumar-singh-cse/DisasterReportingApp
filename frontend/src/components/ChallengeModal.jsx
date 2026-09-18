@@ -6,6 +6,15 @@ export default function ChallengeModal({ report, isOpen, onClose, onSubmitChalle
   const [counterPhotoUrl, setCounterPhotoUrl] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const handleKey = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [isOpen, onClose]);
+
   if (!isOpen || !report) return null;
 
   const handleFileChange = (e) => {
@@ -47,8 +56,8 @@ export default function ChallengeModal({ report, isOpen, onClose, onSubmitChalle
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-zinc-950 border border-zinc-800 rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
+    <div onClick={onClose} className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div onClick={(e) => e.stopPropagation()} className="bg-zinc-950 border border-zinc-800 rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
         <div className="p-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-950">
           <div className="flex items-center gap-2">
             <span className="p-1.5 rounded-lg bg-amber-950/60 border border-amber-800 text-amber-400">
@@ -56,7 +65,7 @@ export default function ChallengeModal({ report, isOpen, onClose, onSubmitChalle
             </span>
             <div>
               <h2 className="text-sm font-bold text-white">Challenge AI Assessment</h2>
-              <p className="text-[11px] text-zinc-400">TwoTruths treats AI as a second witness, not a judge.</p>
+              <p className="text-[11px] text-zinc-400">Only ResQ treats AI as a second witness, not a judge.</p>
             </div>
           </div>
           <button onClick={onClose} className="p-1 text-zinc-400 hover:text-white">

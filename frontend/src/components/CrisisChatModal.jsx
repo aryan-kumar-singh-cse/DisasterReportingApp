@@ -98,6 +98,15 @@ export default function CrisisChatModal({
     }
   };
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleGlobalKey = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleGlobalKey);
+    return () => window.removeEventListener('keydown', handleGlobalKey);
+  }, [isOpen, onClose]);
+
   const clearChat = () => {
     setMessages([
       {
@@ -112,8 +121,8 @@ export default function CrisisChatModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-black/85 backdrop-blur-xl animate-fade-in">
-      <div className="relative w-full max-w-2xl h-[85vh] rounded-3xl bg-zinc-950/95 border border-cyan-500/40 shadow-2xl shadow-cyan-500/15 overflow-hidden flex flex-col">
+    <div onClick={onClose} className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-black/85 backdrop-blur-xl animate-fade-in">
+      <div onClick={(e) => e.stopPropagation()} className="relative w-full max-w-2xl h-[85vh] rounded-3xl bg-zinc-950/95 border border-cyan-500/40 shadow-2xl shadow-cyan-500/15 overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-zinc-900/60">
           <div className="flex items-center gap-3">

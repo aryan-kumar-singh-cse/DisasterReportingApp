@@ -1,7 +1,6 @@
+import React, { useState } from 'react';
+import { Shield, Users, ArrowUpRight, Flame, Droplets, Activity, Wrench, Zap, Loader2 } from 'lucide-react';
 import { generateTacticalBriefing } from '../services/groqService';
-import { Zap, Loader2 } from 'lucide-react';
-import React from 'react';
-import { Shield, Users, ArrowUpRight, Flame, Droplets, Activity, Wrench } from 'lucide-react';
 import { getDissonanceZone } from '../data/schema';
 
 export default function ResponderTriageView({ reports = [], onSelectReport }) {

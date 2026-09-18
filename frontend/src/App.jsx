@@ -97,7 +97,7 @@ export default function App() {
   // Filtered reports
   const filteredReports = reports.filter((r) => {
     if (activeFilter === 'DIVERGENT') return (r.dissonanceScore || 0) >= 0.7;
-    if (activeFilter !== 'ALL') return r.disasterType === activeFilter;
+    if (activeFilter !== 'ALL') return (r.disasterType || '').toLowerCase() === activeFilter.toLowerCase();
     return true;
   });
 
@@ -170,12 +170,41 @@ export default function App() {
             onSelectLocation={(loc) => {
               setSearchLocation(loc);
               const target = {
-                locationName: `${loc.name}${loc.district ? ', ' + loc.district : ''}`,
+                locationName: `${loc.name}${loc.district ? ', ' + loc.district : (loc.state ? ', ' + loc.state : '')}`,
                 latitude: loc.lat,
                 longitude: loc.lng,
                 name: loc.name
               };
               setWeatherTarget(target);
+
+              // Focus or create targeted telemetry report for searched location
+              const matchedReport = reports.find(r => 
+                (r.locationName || '').toLowerCase().includes(loc.name.toLowerCase()) ||
+                (loc.district && (r.locationName || '').toLowerCase().includes(loc.district.toLowerCase()))
+              );
+              if (matchedReport) {
+                setSelectedReport(matchedReport);
+              } else {
+                setSelectedReport({
+                  reportId: `search-${Date.now()}`,
+                  disasterType: 'SEARCH TARGET',
+                  locationName: target.locationName,
+                  latitude: loc.lat,
+                  longitude: loc.lng,
+                  userSeverity: 'Medium',
+                  aiSeverity: 'Medium',
+                  dissonanceScore: 0.15,
+                  aiVerification: 'GEOTARGETED TELEMETRY STREAM',
+                  description: `Atmospheric and regional disaster monitoring active for ${loc.name}. Sensor feeds calibrated.`,
+                  aiSummary: `Satellite & Doppler radar monitoring calibrated for ${loc.name}. Convective and structural telemetry active.`,
+                  confirmVotes: 0,
+                  disputeVotes: 0,
+                  clusterCount: 1,
+                  createdAt: new Date().toISOString(),
+                  verificationStatus: 'AI_ASSESSED'
+                });
+              }
+
               if (viewMode === 'responder') setViewMode('globe');
             }}
             onUseCurrentLocation={handleDirectGPS}
@@ -269,7 +298,7 @@ export default function App() {
         reports={reports}
         onSelectReport={(rep) => {
           setSelectedReport(rep);
-          if (viewMode !== 'citizen') setViewMode('citizen');
+          if (viewMode === 'responder') setViewMode('globe');
         }}
         selectedReportId={selectedReport?.reportId}
       />
@@ -414,9 +443,9 @@ export default function App() {
         lat={weatherTarget?.latitude ?? selectedReport?.latitude ?? 19.0760}
         lng={weatherTarget?.longitude ?? selectedReport?.longitude ?? 72.8777}
         condition={
-          (weatherTarget || selectedReport)?.disasterType === 'FLOOD'
+          (weatherTarget || selectedReport)?.disasterType?.toLowerCase() === 'flood'
             ? 'Severe Monsoonal Squall & Flood Surge'
-            : (weatherTarget || selectedReport)?.disasterType === 'FIRE'
+            : (weatherTarget || selectedReport)?.disasterType?.toLowerCase() === 'fire'
             ? 'Dry High-Wind Convective Heat Front'
             : 'Unstable Atmospheric Storm Front'
         }
