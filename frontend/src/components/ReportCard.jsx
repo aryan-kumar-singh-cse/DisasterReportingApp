@@ -160,8 +160,9 @@ export default function ReportCard({
               </div>
             </div>
 
-            <div className="pt-2 mt-2 border-t border-zinc-800/60 text-[10px] text-zinc-500 font-mono">
-              Engine: Amazon Rekognition
+            <div className="pt-2 mt-2 border-t border-zinc-800/60 text-[10px] text-zinc-500 font-mono flex items-center justify-between">
+              <span>Engine: Google Gemini Multimodal Vision</span>
+              <span className="text-emerald-400 font-semibold">● Active Edge</span>
             </div>
           </div>
         </div>

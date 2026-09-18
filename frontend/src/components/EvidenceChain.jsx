@@ -17,7 +17,7 @@ export default function EvidenceChain({ report }) {
       >
         <div className="flex items-center gap-2">
           <Eye className="w-4 h-4 text-cyan-400" />
-          <span>Evidence Chain & Deep Rekognition Audit</span>
+          <span>Evidence Chain & Multimodal Vision Audit</span>
           <span className="text-[10px] text-cyan-400 bg-cyan-950/60 border border-cyan-800 px-2 py-0.5 rounded-full font-mono">
             {report.aiDetectedLabels?.length || 0} labels detected
           </span>
