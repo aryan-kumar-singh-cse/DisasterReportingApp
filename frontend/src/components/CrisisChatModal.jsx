@@ -33,8 +33,8 @@ export default function CrisisChatModal({
     {
       id: 'init-1',
       role: 'assistant',
-      content: `🛡️ **ResQ AI Crisis Intelligence Engine Active** (Powered by Groq & Google AI)\n\nI am your live emergency assistant. Ask me about real-time disaster conditions for any campus or city (e.g., **SRM Modinagar**, **Mumbai**, **Delhi-NCR**), evacuation routing, emergency shelter coordinates, or live weather hazard guidance.`,
-      agent: 'Groq AI Tactical Core'
+      content: `🛡️ **ResQ AI Crisis Intelligence Core Active**\n\nI am your live emergency assistant. Ask me about real-time disaster conditions for any campus or city (e.g., **SRM Modinagar**, **Mumbai**, **Delhi-NCR**), evacuation routing, emergency shelter coordinates, or live weather hazard guidance.`,
+      agent: 'ResQ AI Tactical Core'
     }
   ]);
   const [inputValue, setInputValue] = useState('');
@@ -73,7 +73,7 @@ export default function CrisisChatModal({
         id: `ai-${Date.now()}`,
         role: 'assistant',
         content: res?.response || 'ResQ Emergency protocol: stay sheltered and monitor national emergency 112.',
-        agent: res?.agent || 'Groq AI Tactical Agent'
+        agent: res?.agent || 'ResQ AI Tactical Agent'
       };
       setMessages((prev) => [...prev, aiMsg]);
     } catch {
@@ -113,7 +113,7 @@ export default function CrisisChatModal({
         id: `init-${Date.now()}`,
         role: 'assistant',
         content: `🛡️ **ResQ AI Crisis Intelligence Core Reset**\nReady for crisis inquiries across any campus, district, or sector.`,
-        agent: 'Groq AI Tactical Core'
+        agent: 'ResQ AI Tactical Core'
       }
     ]);
   };
@@ -133,7 +133,7 @@ export default function CrisisChatModal({
               <div className="flex items-center gap-2">
                 <h2 className="text-base font-bold text-white font-mono">ResQ Crisis AI Assistant</h2>
                 <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-mono">
-                  Groq / Google AI
+                  ResQ AI Intelligence
                 </span>
               </div>
               <p className="text-xs text-zinc-400 font-mono flex items-center gap-1">
@@ -225,7 +225,7 @@ export default function CrisisChatModal({
               </div>
               <div className="rounded-2xl px-4 py-2.5 bg-zinc-900 border border-zinc-800 text-zinc-400 text-xs flex items-center gap-2">
                 <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-400" />
-                <span>ResQ Agent reasoning via Groq 120B...</span>
+                <span>ResQ AI analyzing crisis telemetry...</span>
               </div>
             </div>
           )}

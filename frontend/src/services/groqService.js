@@ -1,6 +1,6 @@
 /**
- * ResQ - Groq & Gemini Crisis Intelligence Engine
- * Powered by Groq 120B & Gemini Multi-modal Agents
+ * Only ResQ - AI Crisis Intelligence Engine
+ * Powered by ResQ AI Multi-modal Reasoning Core
  */
 
 export async function askCrisisAgent(message, history = [], location = 'Incident Area') {
@@ -170,7 +170,7 @@ If you feel strong ground shaking near the coast OR observe seawater rapidly rec
 1. **Citizen Claim**: Ground observations submitted by eyewitnesses with GPS coordinates.
 2. **Computer Vision Audit**:
    - **AWS Rekognition**: Detects physical object labels, confidence levels, and hazard categories.
-   - **Gemini 2.0 Vision**: Applies negative-space reasoning to check whether visual indicators match claimed disaster severity.
+   - **ResQ AI Vision**: Applies negative-space reasoning to check whether visual indicators match claimed disaster severity.
 3. **Dissonance Score Calculation**:
    - **0.00 – 0.30 (Aligned)**: Photographic evidence confirms emergency claim. High dispatch priority.
    - **0.31 – 0.69 (Partial)**: Ambiguous evidence or minor severity mismatch.
@@ -190,7 +190,7 @@ If you feel strong ground shaking near the coast OR observe seawater rapidly rec
 
 ### 📡 Telemetry Overview:
 - **Operational Status**: Real-time atmospheric, seismic, and incident feeds active.
-- **Visual Evidence Auditing**: Ground claims verified against AWS Rekognition & Gemini Vision.
+- **Visual Evidence Auditing**: Ground claims verified against AWS Rekognition & ResQ AI Vision.
 - **Doppler Radar & Lightning**: Integrated ECMWF precipitation radar and DAMINI lightning sensors active.
 - **Tactical Action**: If lives are in immediate peril, dial unified emergency **112** or NDRF **1078** immediately.`;
   }

@@ -344,7 +344,7 @@ export default function ReportFormModal({ isOpen, onClose, onSubmitReport }) {
                 AWS Rekognition
               </span>
               <span className="px-1.5 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 font-mono text-[9px] font-bold">
-                Gemini 2.0 Vision
+                ResQ AI Vision
               </span>
             </div>
             <span className="text-zinc-400 text-[10px] font-mono">ap-south-1 live</span>
@@ -367,7 +367,7 @@ export default function ReportFormModal({ isOpen, onClose, onSubmitReport }) {
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Auditing via AWS & Gemini...</span>
+                  <span>Auditing via ResQ AI & AWS...</span>
                 </>
               ) : (
                 <span>Submit Audited Report</span>

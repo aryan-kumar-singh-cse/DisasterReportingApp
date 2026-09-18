@@ -116,25 +116,25 @@ export async function assessWithAwsAndGemini({
     dissonanceScore = 0.10;
     aiSeverity = userSeverity === 'Critical' ? 'Critical' : 'High';
     negativeSpace = ['No arid terrain or drought signatures detected.'];
-    aiSummary = `AWS Rekognition verified [${rekognitionTopNames}]. Gemini Vision confirms severe ground-level inundation at ${locationName || 'the reported area'}.`;
+    aiSummary = `AWS Rekognition verified [${rekognitionTopNames}]. ResQ AI Vision confirms severe ground-level inundation at ${locationName || 'the reported area'}.`;
   } else if (disasterType === 'Fire') {
     aiVerification = 'CONSISTENT';
     dissonanceScore = 0.12;
     aiSeverity = 'Critical';
     negativeSpace = ['No domestic barbecue or recreation indicators identified.'];
-    aiSummary = `AWS Rekognition confirmed active combustion signatures [${rekognitionTopNames}]. Gemini Vision validates rapid flame spread.`;
+    aiSummary = `AWS Rekognition confirmed active combustion signatures [${rekognitionTopNames}]. ResQ AI Vision validates rapid flame spread.`;
   } else if (disasterType === 'Infrastructure Damage') {
     aiVerification = 'CONSISTENT';
     dissonanceScore = 0.22;
     aiSeverity = userSeverity === 'Critical' ? 'High' : 'Medium';
     negativeSpace = ['No structural collapse of adjacent high-rise edifices.'];
-    aiSummary = `AWS Rekognition detected structural distress [${rekognitionTopNames}]. Gemini Vision confirms roadway impact requiring emergency dispatch.`;
+    aiSummary = `AWS Rekognition detected structural distress [${rekognitionTopNames}]. ResQ AI Vision confirms roadway impact requiring emergency dispatch.`;
   } else {
     aiVerification = 'CONSISTENT';
     dissonanceScore = 0.18;
     aiSeverity = userSeverity;
     negativeSpace = ['Signatures match standard hazard threshold.'];
-    aiSummary = `AWS Rekognition and Gemini Vision corroborated citizen claim for ${disasterType}.`;
+    aiSummary = `AWS Rekognition and ResQ AI Vision corroborated citizen claim for ${disasterType}.`;
   }
 
   return {
@@ -149,8 +149,8 @@ export async function assessWithAwsAndGemini({
       source: rekognitionResult.source,
       labelsCount: rekognitionResult.labels.length
     },
-    geminiVision: {
-      model: 'gemini-2.0-flash',
+    resqVision: {
+      model: 'resq-ai-vision-core',
       multimodalReasoning: 'Audited against citizen claim and ground truth',
       dissonanceZone: dissonanceScore <= 0.3 ? 'Aligned' : dissonanceScore <= 0.69 ? 'Partial' : 'Divergent'
     },

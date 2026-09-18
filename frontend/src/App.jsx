@@ -257,11 +257,11 @@ export default function App() {
           {/* ResQ Crisis GPT Agent */}
           <button
             onClick={() => setIsChatModalOpen(true)}
-            title="Chat with ResQ Crisis AI (Groq 120B / Gemini)"
+            title="Chat with ResQ Crisis AI Assistant"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-600/30 to-blue-600/30 hover:from-cyan-600/50 hover:to-blue-600/50 text-cyan-200 border border-cyan-500/40 text-xs font-semibold shadow-sm transition-all cursor-pointer"
           >
             <Bot className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="hidden sm:inline">Crisis GPT</span>
+            <span className="hidden sm:inline">Crisis AI</span>
           </button>
 
           <button

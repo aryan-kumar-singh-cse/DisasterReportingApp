@@ -304,7 +304,7 @@ export default function ReportCard({
                     <div className="text-[11px] font-mono text-cyan-400 mb-1 flex items-center justify-between">
                       <span className="flex items-center gap-1.5">
                         <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
-                        <span>AWS + Gemini Vision:</span>
+                        <span>ResQ AI Vision:</span>
                       </span>
                       <span className="text-zinc-400 font-mono">{Math.round((report.aiConfidence || 0.94) * 100)}% Conf</span>
                     </div>
@@ -324,7 +324,7 @@ export default function ReportCard({
                       AWS Rekognition
                     </span>
                     <span className="px-1.5 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-[9px] font-bold">
-                      Gemini 2.0
+                      ResQ AI 2.0
                     </span>
                   </div>
                   <span style={{ color: zone.color }} className="font-bold">{zone.label}</span>
@@ -337,12 +337,12 @@ export default function ReportCard({
               <EvidenceChain report={report} />
             </div>
 
-            {/* Groq 120B Commander Dispatch Briefing */}
+            {/* ResQ AI Commander Dispatch Briefing */}
             <div className="p-3.5 rounded-xl bg-zinc-900/80 border border-cyan-500/30 shadow-inner">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-                  <span className="text-xs font-bold text-cyan-400 font-mono">Groq 120B Incident Briefing</span>
+                  <span className="text-xs font-bold text-cyan-400 font-mono">ResQ AI Incident Briefing</span>
                 </div>
                 {!briefing && (
                   <button
@@ -360,7 +360,7 @@ export default function ReportCard({
                 </div>
               ) : (
                 <p className="text-[11px] text-zinc-500 font-sans italic">
-                  Generate instant tactical dispatch directive powered by Groq's 120B model based on dissonance score.
+                  Generate instant tactical dispatch directive powered by ResQ AI based on dissonance score.
                 </p>
               )}
             </div>
