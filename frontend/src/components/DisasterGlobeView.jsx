@@ -87,6 +87,16 @@ export default function DisasterGlobeView({
     }
   }, [searchLocation]);
 
+  // Auto-dismiss GPS/Search notification after 5 seconds to keep globe clean
+  useEffect(() => {
+    if (liveGpsNotification) {
+      const timer = setTimeout(() => {
+        setLiveGpsNotification(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [liveGpsNotification]);
+
   const handleZoomIn = () => {
     if (cameraRef.current) {
       cameraRef.current.position.z = Math.max(2.8, cameraRef.current.position.z - 0.6);
@@ -238,34 +248,38 @@ export default function DisasterGlobeView({
     rimLight.position.set(-5, -2, -4);
     scene.add(rimLight);
 
-    // Disaster Markers
+    // Disaster Markers (Refined, elegant pins)
     const markersGroup = new THREE.Group();
     globeGroup.add(markersGroup);
     const markerObjects = [];
 
     reports.forEach((rep) => {
       if (typeof rep.latitude !== 'number' || typeof rep.longitude !== 'number') return;
-      const pos = latLngToVector3(rep.latitude, rep.longitude, 2.03);
+      const pos = latLngToVector3(rep.latitude, rep.longitude, 2.015);
+      const isSelected = selectedReport?.reportId === rep.reportId;
 
       let pinColor = 0x06b6d4; // cyan
-      if (rep.disasterType === 'FIRE') pinColor = 0xef4444; // red
-      else if (rep.disasterType === 'FLOOD') pinColor = 0x3b82f6; // blue
-      else if ((rep.dissonanceScore || 0) >= 0.7) pinColor = 0xeab308; // yellow
+      if (rep.disasterType === 'FIRE') pinColor = 0xf43f5e; // red
+      else if (rep.disasterType === 'FLOOD') pinColor = 0x0ea5e9; // blue
+      else if ((rep.dissonanceScore || 0) >= 0.7) pinColor = 0xf59e0b; // amber
 
-      const pinStemGeo = new THREE.CylinderGeometry(0.012, 0.012, 0.12, 8);
+      // Delicate vertical needle stem
+      const pinStemGeo = new THREE.CylinderGeometry(0.002, 0.002, 0.035, 6);
       const pinMat = new THREE.MeshBasicMaterial({ color: pinColor });
       const pinStem = new THREE.Mesh(pinStemGeo, pinMat);
 
-      const pinHeadGeo = new THREE.SphereGeometry(0.045, 16, 16);
+      // Compact glowing gem head
+      const pinHeadGeo = new THREE.SphereGeometry(isSelected ? 0.018 : 0.014, 14, 14);
       const pinHead = new THREE.Mesh(pinHeadGeo, pinMat);
-      pinHead.position.y = 0.06;
+      pinHead.position.y = 0.018;
 
-      const ringGeo = new THREE.RingGeometry(0.03, 0.07, 24);
+      // Subtle translucent ground pulse wave
+      const ringGeo = new THREE.RingGeometry(0.005, 0.015, 20);
       const ringMat = new THREE.MeshBasicMaterial({
         color: pinColor,
         side: THREE.DoubleSide,
         transparent: true,
-        opacity: 0.75
+        opacity: isSelected ? 0.6 : 0.35
       });
       const ring = new THREE.Mesh(ringGeo, ringMat);
       ring.rotation.x = Math.PI / 2;
@@ -283,22 +297,27 @@ export default function DisasterGlobeView({
       markerObjects.push(marker);
     });
 
-    // User GPS 3D Marker on Globe
+    // User GPS 3D Marker on Globe (Sleek emerald beacon)
     let userGpsMarker = null;
     if (activeUserGPS) {
-      const uPos = latLngToVector3(activeUserGPS.lat, activeUserGPS.lng, 2.035);
-      const uRingGeo = new THREE.RingGeometry(0.04, 0.1, 28);
-      const uRingMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, side: THREE.DoubleSide, transparent: true, opacity: 0.95 });
+      const uPos = latLngToVector3(activeUserGPS.lat, activeUserGPS.lng, 2.018);
+      const uRingGeo = new THREE.RingGeometry(0.006, 0.02, 24);
+      const uRingMat = new THREE.MeshBasicMaterial({ color: 0x10b981, side: THREE.DoubleSide, transparent: true, opacity: 0.5 });
       const uRing = new THREE.Mesh(uRingGeo, uRingMat);
       uRing.rotation.x = Math.PI / 2;
 
-      const uDotGeo = new THREE.SphereGeometry(0.055, 16, 16);
+      const uStemGeo = new THREE.CylinderGeometry(0.0025, 0.0025, 0.04, 6);
+      const uStemMat = new THREE.MeshBasicMaterial({ color: 0x10b981 });
+      const uStem = new THREE.Mesh(uStemGeo, uStemMat);
+
+      const uDotGeo = new THREE.SphereGeometry(0.018, 16, 16);
       const uDotMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
       const uDot = new THREE.Mesh(uDotGeo, uDotMat);
-      uDot.position.y = 0.06;
+      uDot.position.y = 0.02;
 
       userGpsMarker = new THREE.Group();
       userGpsMarker.add(uRing);
+      userGpsMarker.add(uStem);
       userGpsMarker.add(uDot);
       userGpsMarker.position.copy(uPos);
       userGpsMarker.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), uPos.clone().normalize());
@@ -318,23 +337,23 @@ export default function DisasterGlobeView({
       markerObjects.push(userGpsMarker);
     }
 
-    // Searched Location 3D Beacon on Globe
+    // Searched Location 3D Beacon on Globe (Sleek sky-blue pin)
     let searchMarker = null;
     if (searchLocation && typeof searchLocation.lat === 'number' && typeof searchLocation.lng === 'number') {
-      const sPos = latLngToVector3(searchLocation.lat, searchLocation.lng, 2.038);
-      const sRingGeo = new THREE.RingGeometry(0.045, 0.12, 32);
-      const sRingMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide, transparent: true, opacity: 0.95 });
+      const sPos = latLngToVector3(searchLocation.lat, searchLocation.lng, 2.018);
+      const sRingGeo = new THREE.RingGeometry(0.006, 0.02, 24);
+      const sRingMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide, transparent: true, opacity: 0.5 });
       const sRing = new THREE.Mesh(sRingGeo, sRingMat);
       sRing.rotation.x = Math.PI / 2;
 
-      const sStemGeo = new THREE.CylinderGeometry(0.015, 0.015, 0.18, 12);
+      const sStemGeo = new THREE.CylinderGeometry(0.0025, 0.0025, 0.04, 6);
       const sStemMat = new THREE.MeshBasicMaterial({ color: 0x0284c7 });
       const sStem = new THREE.Mesh(sStemGeo, sStemMat);
 
-      const sDotGeo = new THREE.SphereGeometry(0.065, 16, 16);
+      const sDotGeo = new THREE.SphereGeometry(0.018, 16, 16);
       const sDotMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
       const sDot = new THREE.Mesh(sDotGeo, sDotMat);
-      sDot.position.y = 0.09;
+      sDot.position.y = 0.02;
 
       searchMarker = new THREE.Group();
       searchMarker.add(sRing);
@@ -497,7 +516,7 @@ export default function DisasterGlobeView({
 
       markerObjects.forEach((m, idx) => {
         if (m.userData?.ring) {
-          const s = 1.0 + Math.sin(elapsed * 4 + idx) * 0.35;
+          const s = 1.0 + Math.sin(elapsed * 2.2 + idx) * 0.15;
           m.userData.ring.scale.set(s, s, s);
         }
       });
@@ -562,38 +581,18 @@ export default function DisasterGlobeView({
       {/* 3D WebGL Canvas */}
       <div ref={mountRef} className="w-full h-full min-h-[440px] cursor-grab" />
 
-      {/* Floating Tactical Controls Toolbar (WeatherGPT Style) */}
-      <div className="absolute top-3 right-3 z-30 flex items-center gap-2 bg-zinc-950/85 backdrop-blur-md p-1.5 rounded-xl border border-zinc-800 shadow-2xl flex-wrap justify-end">
-        {/* Zoom In / Zoom Out Controls */}
-        <div className="flex items-center bg-zinc-900 rounded-lg border border-zinc-800 p-0.5">
-          <button
-            type="button"
-            onClick={handleZoomIn}
-            title="Zoom In 3D Globe"
-            className="p-1 rounded text-zinc-300 hover:text-white hover:bg-zinc-800 transition cursor-pointer"
-          >
-            <ZoomIn className="w-3.5 h-3.5 text-cyan-400" />
-          </button>
-          <button
-            type="button"
-            onClick={handleZoomOut}
-            title="Zoom Out 3D Globe"
-            className="p-1 rounded text-zinc-300 hover:text-white hover:bg-zinc-800 transition cursor-pointer"
-          >
-            <ZoomOut className="w-3.5 h-3.5 text-zinc-400" />
-          </button>
-        </div>
-
-        {/* Live GPS Button (Moves Globe to User & Opens Radar) */}
+      {/* Floating Spatial Controls (Clean, Minimal, Non-redundant) */}
+      <div className="absolute top-3 right-3 z-20 flex items-center gap-1 bg-zinc-950/75 backdrop-blur-xl p-1 rounded-xl border border-zinc-800/80 shadow-2xl">
+        {/* My Live GPS */}
         <button
           type="button"
           onClick={handleGlobeGPS}
           disabled={isLocatingGPS}
-          title="Fly to your exact live GPS location and open radar"
-          className={`px-3 py-1.5 rounded-lg border transition-all flex items-center gap-1.5 text-xs font-semibold cursor-pointer shadow-md ${
+          title="Fly to your exact live GPS location"
+          className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 ${
             isLocatingGPS
-              ? 'bg-cyan-500/25 border-cyan-400 text-cyan-200 animate-pulse'
-              : 'bg-zinc-900 hover:bg-cyan-950/60 text-cyan-300 border-zinc-800 hover:border-cyan-500/50'
+              ? 'bg-cyan-500/20 text-cyan-300 animate-pulse'
+              : 'hover:bg-cyan-950/60 text-cyan-300'
           }`}
         >
           {isLocatingGPS ? (
@@ -601,133 +600,126 @@ export default function DisasterGlobeView({
           ) : (
             <Navigation className="w-3.5 h-3.5 text-cyan-400" />
           )}
-          <span>{isLocatingGPS ? 'Locating GPS...' : '🎯 My Live GPS'}</span>
+          <span className="text-[11px] font-medium hidden sm:inline">{isLocatingGPS ? 'Locating...' : 'My GPS'}</span>
         </button>
 
-        {/* Live Radar Button */}
-        {onOpenRadar && (
-          <button
-            type="button"
-            onClick={() => onOpenRadar(selectedReport || reports[0])}
-            title="Open Live Doppler Weather Radar"
-            className="px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-cyan-950/60 text-cyan-300 border border-cyan-500/30 hover:border-cyan-400 transition-all flex items-center gap-1.5 text-xs font-semibold cursor-pointer shadow-sm"
-          >
-            <CloudRain className="w-3.5 h-3.5 text-cyan-400" />
-            <span>🌧️ Live Radar</span>
-          </button>
-        )}
+        <div className="w-[1px] h-4 bg-zinc-800" />
 
-        {/* Live Lightning Button */}
-        {onOpenLightning && (
-          <button
-            type="button"
-            onClick={() => onOpenLightning(selectedReport || reports[0])}
-            title="Open IITM / DAMINI Lightning Scope"
-            className="px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-yellow-950/60 text-yellow-300 border border-yellow-500/30 hover:border-yellow-400 transition-all flex items-center gap-1.5 text-xs font-semibold cursor-pointer shadow-sm"
-          >
-            <Zap className="w-3.5 h-3.5 text-yellow-400" />
-            <span>⚡ Lightning</span>
-          </button>
-        )}
+        {/* Zoom In */}
+        <button
+          type="button"
+          onClick={handleZoomIn}
+          title="Zoom In (+)"
+          className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-300 hover:text-white transition cursor-pointer"
+        >
+          <ZoomIn className="w-3.5 h-3.5 text-cyan-400" />
+        </button>
 
-        {/* Crisis GPT Button */}
-        {onOpenChat && (
-          <button
-            type="button"
-            onClick={onOpenChat}
-            title="Chat with ResQ Crisis AI (Groq 120B / Gemini)"
-            className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-semibold flex items-center gap-1.5 text-xs shadow-md transition-all cursor-pointer"
-          >
-            <Bot className="w-3.5 h-3.5" />
-            <span>💬 Crisis GPT</span>
-          </button>
-        )}
+        {/* Zoom Out */}
+        <button
+          type="button"
+          onClick={handleZoomOut}
+          title="Zoom Out (-)"
+          className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-300 hover:text-white transition cursor-pointer"
+        >
+          <ZoomOut className="w-3.5 h-3.5 text-zinc-400" />
+        </button>
+
+        {/* Reset Orientation */}
+        <button
+          type="button"
+          onClick={() => {
+            if (rotateToCoordsRef.current) {
+              rotateToCoordsRef.current(22.5, 78.5);
+            }
+            if (cameraRef.current) {
+              cameraRef.current.position.z = 5.7;
+            }
+          }}
+          title="Reset Globe Orientation"
+          className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition cursor-pointer"
+        >
+          <LocateFixed className="w-3.5 h-3.5" />
+        </button>
       </div>
 
-      {/* GPS / Location Acquired Notification Card */}
+      {/* GPS / Location Acquired Notification Pill (Slim, Glassmorphic) */}
       {liveGpsNotification && (
-        <div className="absolute top-16 left-4 z-30 p-3.5 rounded-2xl bg-zinc-950/90 border border-cyan-500/50 backdrop-blur-xl shadow-2xl max-w-sm animate-fade-in flex items-start justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-1.5 text-cyan-300 font-bold text-xs mb-1">
-              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
-              <span>{liveGpsNotification.title}</span>
-            </div>
-            <p className="text-[11px] font-mono text-zinc-400">{liveGpsNotification.coords}</p>
-            <p className="text-[11px] text-zinc-300 mt-1 mb-2">
-              3D Globe centered and focused on coordinates.
-            </p>
-            {onOpenRadar && (
-              <button
-                type="button"
-                onClick={() => {
-                  if (liveGpsNotification.report) onOpenRadar(liveGpsNotification.report);
-                  else if (liveGpsNotification.lat && liveGpsNotification.lng) {
-                    onOpenRadar({
-                      locationName: liveGpsNotification.title,
-                      latitude: liveGpsNotification.lat,
-                      longitude: liveGpsNotification.lng
-                    });
-                  }
-                }}
-                className="py-1 px-2.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-[11px] font-bold flex items-center gap-1.5 cursor-pointer shadow transition"
-              >
-                <span>🌧️ Open Live Radar Here</span>
-              </button>
-            )}
-          </div>
+        <div className="absolute top-3 left-3 z-20 flex items-center gap-2 bg-zinc-950/85 backdrop-blur-xl border border-cyan-500/40 px-3 py-1.5 rounded-full shadow-2xl animate-fade-in text-xs max-w-sm">
+          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shrink-0" />
+          <span className="font-semibold text-white truncate text-[11px]">{liveGpsNotification.title}</span>
+          <span className="font-mono text-cyan-400 text-[10px] shrink-0">{liveGpsNotification.coords}</span>
+          {onOpenRadar && (
+            <button
+              type="button"
+              onClick={() => {
+                if (liveGpsNotification.report) onOpenRadar(liveGpsNotification.report);
+                else if (liveGpsNotification.lat && liveGpsNotification.lng) {
+                  onOpenRadar({
+                    locationName: liveGpsNotification.title,
+                    latitude: liveGpsNotification.lat,
+                    longitude: liveGpsNotification.lng
+                  });
+                }
+              }}
+              className="px-2 py-0.5 rounded-full bg-cyan-600/90 hover:bg-cyan-500 text-white text-[10px] font-bold transition shrink-0 cursor-pointer shadow-sm"
+            >
+              Radar
+            </button>
+          )}
           <button
             onClick={() => setLiveGpsNotification(null)}
-            className="text-zinc-500 hover:text-white p-1"
+            className="text-zinc-500 hover:text-white p-0.5 transition cursor-pointer"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3 h-3" />
           </button>
         </div>
       )}
 
       {/* Floating Hover Card HUD */}
       {hoveredReport && (
-        <div className="absolute top-4 left-4 z-20 p-3.5 rounded-2xl bg-zinc-950/90 border border-cyan-500/50 backdrop-blur-xl shadow-2xl max-w-xs animate-fade-in pointer-events-none">
-          <div className="flex items-center gap-2 mb-1.5">
+        <div className="absolute top-12 left-3 z-20 p-3 rounded-xl bg-zinc-950/90 border border-cyan-500/40 backdrop-blur-xl shadow-2xl max-w-xs animate-fade-in pointer-events-none">
+          <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-bold text-white font-mono">{hoveredReport.disasterType}</span>
-            <span className="text-[10px] px-2 py-0.5 rounded font-mono bg-zinc-900 border border-zinc-700 text-zinc-300">
+            <span className="text-[9px] px-1.5 py-0.2 rounded font-mono bg-zinc-900 border border-zinc-700 text-zinc-300">
               {hoveredReport.userSeverity}
             </span>
           </div>
-          <p className="text-xs text-cyan-300 font-semibold mb-1">{hoveredReport.locationName}</p>
-          <p className="text-[11px] text-zinc-400 line-clamp-2 italic mb-2">"{hoveredReport.description}"</p>
-          <div className="text-[10px] text-zinc-500 font-mono">
-            Dissonance: {Math.round((hoveredReport.dissonanceScore || 0) * 100)}% • Click to open details
+          <p className="text-xs text-cyan-300 font-semibold truncate">{hoveredReport.locationName}</p>
+          <div className="text-[9px] text-zinc-400 font-mono mt-1">
+            Dissonance: {Math.round((hoveredReport.dissonanceScore || 0) * 100)}% • Click pin to focus
           </div>
         </div>
       )}
 
-      {/* Quick Active Incident Hotspots Strip at bottom */}
-      <div className="absolute bottom-4 left-4 right-4 z-20 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-        <span className="text-[11px] font-mono text-zinc-400 shrink-0 flex items-center gap-1 bg-zinc-900/80 px-2 py-1 rounded-lg border border-zinc-800">
-          <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-          <span>Active Hotspots:</span>
+      {/* Quick Incident Hotspots Capsule (Centered, Dynamic Island Style) */}
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 bg-zinc-950/70 backdrop-blur-md px-3 py-1 rounded-full border border-zinc-800/80 shadow-2xl max-w-[90%] overflow-x-auto scrollbar-none">
+        <span className="text-[10px] font-mono text-zinc-400 shrink-0 flex items-center gap-1 mr-1">
+          <Sparkles className="w-3 h-3 text-cyan-400" />
+          <span className="hidden sm:inline">Active:</span>
         </span>
-
-        {reports.slice(0, 6).map((rep) => (
-          <button
-            key={rep.reportId}
-            onClick={() => {
-              onSelectReport(rep);
-              if (rotateToCoordsRef.current) {
-                rotateToCoordsRef.current(rep.latitude, rep.longitude);
-              }
-            }}
-            className="px-3 py-1.5 rounded-xl bg-zinc-900/85 hover:bg-cyan-950/80 border border-zinc-700/80 hover:border-cyan-400/60 text-zinc-200 hover:text-cyan-200 text-xs font-mono font-medium shrink-0 transition-all flex items-center gap-1.5 cursor-pointer shadow-lg"
-          >
-            <MapPin className="w-3 h-3 text-cyan-400" />
-            <span>{rep.locationName.split(',')[0]}</span>
-            <span className={`text-[9px] px-1 py-0.2 rounded font-bold ${
-              rep.disasterType === 'FIRE' ? 'bg-red-500/20 text-red-300' : 'bg-blue-500/20 text-blue-300'
-            }`}>
-              {rep.disasterType}
-            </span>
-          </button>
-        ))}
+        {reports.slice(0, 5).map((rep) => {
+          const isSel = selectedReport?.reportId === rep.reportId;
+          return (
+            <button
+              key={rep.reportId}
+              onClick={() => {
+                onSelectReport(rep);
+                if (rotateToCoordsRef.current) {
+                  rotateToCoordsRef.current(rep.latitude, rep.longitude);
+                }
+              }}
+              className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono transition-all shrink-0 cursor-pointer flex items-center gap-1.5 border ${
+                isSel
+                  ? 'bg-cyan-500/20 border-cyan-400/80 text-cyan-200'
+                  : 'bg-zinc-900/60 border-zinc-800/80 text-zinc-300 hover:border-zinc-700 hover:text-white'
+              }`}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${rep.disasterType === 'FIRE' ? 'bg-red-400' : 'bg-cyan-400'}`} />
+              <span>{rep.locationName.split(',')[0]}</span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

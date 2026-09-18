@@ -37,6 +37,11 @@ export default function ReportCard({
   const [briefing, setBriefing] = useState(null);
   const [isGeneratingBriefing, setIsGeneratingBriefing] = useState(false);
   const [secondsTick, setSecondsTick] = useState(0);
+  const [imgError, setImgError] = useState(false);
+
+  useEffect(() => {
+    setImgError(false);
+  }, [report?.reportId]);
 
   // Live 1-second telemetry stream ticker
   useEffect(() => {
@@ -247,12 +252,28 @@ export default function ReportCard({
                     </span>
                   </div>
 
-                  <div className="relative rounded-lg overflow-hidden border border-zinc-800 mb-2 aspect-video bg-zinc-950">
-                    <img
-                      src={report.photoUrl}
-                      alt="Incident evidence"
-                      className="w-full h-full object-cover"
-                    />
+                  <div className="relative rounded-lg overflow-hidden border border-zinc-800 mb-2 aspect-video bg-zinc-950 flex items-center justify-center">
+                    {report.photoUrl && !imgError && report.disasterType !== 'LIVE GPS' && report.disasterType !== 'SEARCH TARGET' ? (
+                      <img
+                        src={report.photoUrl}
+                        alt="Incident visual evidence"
+                        className="w-full h-full object-cover"
+                        onError={() => setImgError(true)}
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-zinc-900 to-cyan-950/40 p-4 flex flex-col items-center justify-center text-center relative overflow-hidden">
+                        <div className="absolute inset-0 bg-[radial-gradient(#06b6d4_1px,transparent_1px)] [background-size:16px_16px] opacity-20" />
+                        <div className="w-9 h-9 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center mb-1 z-10">
+                          <Radio className="w-4 h-4 text-cyan-400 animate-pulse" />
+                        </div>
+                        <span className="text-xs font-bold text-white z-10">
+                          {report.disasterType === 'LIVE GPS' ? 'Live GPS Ground Truth' : 'Satellite Telemetry Stream'}
+                        </span>
+                        <span className="text-[10px] font-mono text-zinc-400 z-10 truncate max-w-[200px]">
+                          {report.locationName || 'Geo-Targeted Coordinate'}
+                        </span>
+                      </div>
+                    )}
                     <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-black/70 text-[9px] font-mono text-zinc-300">
                       Geo-tagged
                     </div>
