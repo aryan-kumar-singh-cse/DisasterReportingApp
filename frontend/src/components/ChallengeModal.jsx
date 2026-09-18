@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { X, MessageSquare, Camera, Loader2, CheckCircle2 } from 'lucide-react';
 
 export default function ChallengeModal({ report, isOpen, onClose, onSubmitChallenge }) {
-  if (!isOpen || !report) return null;
-
   const [contextNote, setContextNote] = useState('');
   const [counterPhotoUrl, setCounterPhotoUrl] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  if (!isOpen || !report) return null;
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];

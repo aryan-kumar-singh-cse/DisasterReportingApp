@@ -15,6 +15,26 @@ import LocationSearchBar from './components/LocationSearchBar';
 import DisasterGlobeView from './components/DisasterGlobeView';
 import CrisisChatModal from './components/CrisisChatModal';
 
+class SafeErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error, info) {
+    console.warn("UI boundary caught error:", error, info);
+    if (this.props.onError) this.props.onError();
+  }
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback || null;
+    }
+    return this.props.children;
+  }
+}
+
 export default function App() {
   const [reports, setReports] = useState(INITIAL_MOCK_REPORTS);
   const [selectedReport, setSelectedReport] = useState(INITIAL_MOCK_REPORTS[0]);
@@ -252,16 +272,33 @@ export default function App() {
         <div className="flex-1 flex flex-col md:flex-row min-h-0 relative">
           {/* Interactive 3D Earth Planetary Disaster Globe (WeatherGPT Hero Style) */}
           <div className="flex-1 h-full min-h-[340px] relative">
-            <DisasterGlobeView
-              reports={filteredReports}
-              selectedReport={selectedReport}
-              onSelectReport={setSelectedReport}
-              onOpenRadar={handleOpenRadar}
-              onOpenLightning={handleOpenLightning}
-              onOpenChat={() => setIsChatModalOpen(true)}
-              userGPS={userGPS}
-              onUserLocationFound={setUserGPS}
-            />
+            <SafeErrorBoundary
+              onError={() => setViewMode('citizen')}
+              fallback={
+                <ReportMap
+                  reports={filteredReports}
+                  selectedReport={selectedReport}
+                  onSelectReport={setSelectedReport}
+                  onOpenRadar={handleOpenRadar}
+                  onOpenLightning={handleOpenLightning}
+                  onOpenGlobe={() => setViewMode('globe')}
+                  searchLocation={searchLocation}
+                  userGPS={userGPS}
+                  onUserLocationFound={setUserGPS}
+                />
+              }
+            >
+              <DisasterGlobeView
+                reports={filteredReports}
+                selectedReport={selectedReport}
+                onSelectReport={setSelectedReport}
+                onOpenRadar={handleOpenRadar}
+                onOpenLightning={handleOpenLightning}
+                onOpenChat={() => setIsChatModalOpen(true)}
+                userGPS={userGPS}
+                onUserLocationFound={setUserGPS}
+              />
+            </SafeErrorBoundary>
           </div>
 
           {/* Right Slide Bar Drawer (Assessment, Live Field Activity, Verified News) */}

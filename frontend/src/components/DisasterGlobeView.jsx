@@ -10,7 +10,8 @@ import {
   Zap,
   Bot,
   ExternalLink,
-  LocateFixed
+  LocateFixed,
+  X
 } from 'lucide-react';
 
 function latLngToVector3(lat, lng, radius) {
@@ -39,6 +40,7 @@ export default function DisasterGlobeView({
   const [isLocatingGPS, setIsLocatingGPS] = useState(false);
   const [activeUserGPS, setActiveUserGPS] = useState(userGPS || null);
   const [liveGpsNotification, setLiveGpsNotification] = useState(null);
+  const [webGlSupported, setWebGlSupported] = useState(true);
 
   const rotateToCoordsRef = useRef(null);
 
@@ -98,25 +100,30 @@ export default function DisasterGlobeView({
     if (!mountRef.current) return;
 
     const container = mountRef.current;
-    const width = container.clientWidth || 800;
-    const height = container.clientHeight || 600;
+    let renderer, animId;
+    let earthGeometry, cloudsGeometry, atmosphereGeo;
+    let earthMaterial, cloudsMaterial, atmosphereMat;
 
-    // Scene setup
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x05070d);
+    try {
+      const width = container.clientWidth || 800;
+      const height = container.clientHeight || 600;
 
-    // Camera setup
-    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-    camera.position.set(0, 0, 5.7);
+      // Scene setup
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x05070d);
 
-    // Renderer setup
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.1;
-    container.innerHTML = '';
-    container.appendChild(renderer.domElement);
+      // Camera setup
+      const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+      camera.position.set(0, 0, 5.7);
+
+      // Renderer setup
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.1;
+      container.innerHTML = '';
+      container.appendChild(renderer.domElement);
 
     // Globe Group
     const globeGroup = new THREE.Group();
@@ -411,21 +418,45 @@ export default function DisasterGlobeView({
     };
     window.addEventListener('resize', onResize);
 
-    return () => {
-      cancelAnimationFrame(animId);
-      container.removeEventListener('pointerdown', onPointerDown);
-      window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('pointerup', onPointerUp);
-      window.removeEventListener('resize', onResize);
-      renderer.dispose();
-      earthGeometry.dispose();
-      cloudsGeometry.dispose();
-      atmosphereGeo.dispose();
-      earthMaterial.dispose();
-      cloudsMaterial.dispose();
-      atmosphereMat.dispose();
-    };
+      return () => {
+        if (animId) cancelAnimationFrame(animId);
+        container.removeEventListener('pointerdown', onPointerDown);
+        window.removeEventListener('pointermove', onPointerMove);
+        window.removeEventListener('pointerup', onPointerUp);
+        window.removeEventListener('resize', onResize);
+        if (renderer) renderer.dispose();
+        if (earthGeometry) earthGeometry.dispose();
+        if (cloudsGeometry) cloudsGeometry.dispose();
+        if (atmosphereGeo) atmosphereGeo.dispose();
+        if (earthMaterial) earthMaterial.dispose();
+        if (cloudsMaterial) cloudsMaterial.dispose();
+        if (atmosphereMat) atmosphereMat.dispose();
+      };
+    } catch (err) {
+      console.warn('WebGL initialization caught error, falling back:', err);
+      setWebGlSupported(false);
+    }
   }, [reports, activeUserGPS]);
+
+  if (!webGlSupported) {
+    return (
+      <div className="w-full h-full min-h-[440px] flex flex-col items-center justify-center bg-zinc-950 p-6 text-center text-zinc-300">
+        <Globe className="w-12 h-12 text-cyan-400 mb-3 animate-pulse" />
+        <h3 className="text-base font-bold text-white mb-1">3D Globe Renderer</h3>
+        <p className="text-xs text-zinc-400 max-w-sm mb-4">
+          WebGL hardware acceleration is disabled in this browser. Use the 2D Satellite / Streets map or launch Doppler Radar directly.
+        </p>
+        <button
+          onClick={() => {
+            if (onOpenRadar) onOpenRadar(selectedReport || reports[0]);
+          }}
+          className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold shadow-md cursor-pointer transition"
+        >
+          🌧️ Open Live Radar & Maps
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full h-full min-h-[440px] relative z-0 flex-1 overflow-hidden bg-[#05070d] select-none font-sans">

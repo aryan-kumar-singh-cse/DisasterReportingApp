@@ -4,8 +4,6 @@ import { DISASTER_TYPES, SEVERITY_LEVELS, calculateTriageScore } from '../data/s
 import { api } from '../services/api';
 
 export default function ReportFormModal({ isOpen, onClose, onSubmitReport }) {
-  if (!isOpen) return null;
-
   const [disasterType, setDisasterType] = useState('Flood');
   const [userSeverity, setUserSeverity] = useState('High');
   const [description, setDescription] = useState('');
@@ -16,6 +14,8 @@ export default function ReportFormModal({ isOpen, onClose, onSubmitReport }) {
   const [locationName, setLocationName] = useState('Mumbai, Maharashtra');
   const [isLocating, setIsLocating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  if (!isOpen) return null;
 
   // Auto-detect browser geolocation with Nominatim Reverse Geocoding
   const handleGetLocation = () => {
