@@ -6,7 +6,7 @@ import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
 import { demoIncidentFixtures } from './fixtures/reportsFixture.js';
 
 const region = process.env.AWS_REGION || 'ap-south-1';
-const tableName = process.env.TABLE_NAME || 'DisasterReports';
+const tableName = process.env.TABLE_NAME || 'DIsasterReports';
 
 async function seed() {
   console.log(`Starting seed to DynamoDB table "${tableName}" in region "${region}"...`);
@@ -18,7 +18,10 @@ async function seed() {
     try {
       await client.send(new PutCommand({
         TableName: tableName,
-        Item: report
+        Item: {
+          ...report,
+          reportID: report.reportId
+        }
       }));
       console.log(`✓ Seeded report: ${report.reportId} (${report.disasterType})`);
       successCount++;

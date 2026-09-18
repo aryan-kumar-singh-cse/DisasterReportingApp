@@ -8,8 +8,8 @@ import { applyVote } from './services/voteService.js';
 import crypto from 'crypto';
 
 const region = process.env.AWS_REGION || 'ap-south-1';
-const tableName = process.env.TABLE_NAME || 'DisasterReports';
-const bucketName = process.env.BUCKET_NAME || 'disaster-reports-storage';
+const tableName = process.env.TABLE_NAME || 'DIsasterReports';
+const bucketName = process.env.BUCKET_NAME || 'resq-622532143668-ap-south-1-an';
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({ region }));
 const s3 = new S3Client({ region });
@@ -55,7 +55,10 @@ export async function handler(event) {
     // 2. GET /reports
     if (path.endsWith('/reports') && method === 'GET') {
       const result = await ddb.send(new ScanCommand({ TableName: tableName }));
-      const items = (result.Items || []).sort(
+      const items = (result.Items || []).map(item => ({
+        ...item,
+        reportId: item.reportId || item.reportID
+      })).sort(
         (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
       );
       return response(200, items);
@@ -126,6 +129,7 @@ export async function handler(event) {
       const now = new Date().toISOString();
 
       const newReport = {
+        reportID: reportId,
         reportId,
         disasterType,
         userSeverity: userSeverity || 'Medium',
@@ -169,7 +173,7 @@ export async function handler(event) {
       // Fetch current report
       const getRes = await ddb.send(new GetCommand({
         TableName: tableName,
-        Key: { reportId }
+        Key: { reportID: reportId }
       }));
 
       if (!getRes.Item) {
@@ -180,7 +184,7 @@ export async function handler(event) {
 
       await ddb.send(new UpdateCommand({
         TableName: tableName,
-        Key: { reportId },
+        Key: { reportID: reportId },
         UpdateExpression: 'SET confirmVotes = :cv, disputeVotes = :dv, verificationStatus = :vs',
         ExpressionAttributeValues: {
           ':cv': updatedFields.confirmVotes,
