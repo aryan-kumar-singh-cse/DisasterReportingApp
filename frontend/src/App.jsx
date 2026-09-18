@@ -153,7 +153,7 @@ export default function App() {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-extrabold text-base tracking-tight text-white font-heading">ResQ</span>
+              <span className="font-extrabold text-base tracking-tight text-white font-heading">Only ResQ</span>
               <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-cyan-400">
                 Crisis Intelligence
               </span>
