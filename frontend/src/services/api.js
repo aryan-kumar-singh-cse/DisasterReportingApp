@@ -3,7 +3,7 @@
  * Connects to AWS API Gateway HTTP API or falls back gracefully to local state.
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 export const api = {
   async isOnline() {
