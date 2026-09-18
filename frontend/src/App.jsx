@@ -169,6 +169,13 @@ export default function App() {
           <LocationSearchBar
             onSelectLocation={(loc) => {
               setSearchLocation(loc);
+              const target = {
+                locationName: `${loc.name}${loc.district ? ', ' + loc.district : ''}`,
+                latitude: loc.lat,
+                longitude: loc.lng,
+                name: loc.name
+              };
+              setWeatherTarget(target);
               if (viewMode === 'responder') setViewMode('globe');
             }}
             onUseCurrentLocation={handleDirectGPS}
@@ -297,6 +304,7 @@ export default function App() {
                 onOpenChat={() => setIsChatModalOpen(true)}
                 userGPS={userGPS}
                 onUserLocationFound={setUserGPS}
+                searchLocation={searchLocation}
               />
             </SafeErrorBoundary>
           </div>

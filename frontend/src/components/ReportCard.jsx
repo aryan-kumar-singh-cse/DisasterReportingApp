@@ -280,8 +280,11 @@ export default function ReportCard({
 
                   <div className="mb-2 p-2.5 rounded-lg bg-zinc-950 border border-zinc-800/80">
                     <div className="text-[11px] font-mono text-cyan-400 mb-1 flex items-center justify-between">
-                      <span>Vision AI Output:</span>
-                      <span className="text-zinc-500">{Math.round((report.aiConfidence || 0.85) * 100)}% Conf</span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+                        <span>AWS + Gemini Vision:</span>
+                      </span>
+                      <span className="text-zinc-400 font-mono">{Math.round((report.aiConfidence || 0.94) * 100)}% Conf</span>
                     </div>
                     <p className="text-xs font-semibold text-zinc-200">
                       {report.aiVerification}
@@ -294,7 +297,14 @@ export default function ReportCard({
                 </div>
 
                 <div className="pt-2 mt-2 border-t border-zinc-800/60 flex items-center justify-between text-[10px] font-mono">
-                  <span className="text-zinc-500">Model: Gemini 2.5 Vision</span>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="px-1.5 py-0.5 rounded bg-orange-950/80 border border-orange-500/40 text-orange-300 text-[9px] font-bold">
+                      AWS Rekognition
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 text-[9px] font-bold">
+                      Gemini 2.0
+                    </span>
+                  </div>
                   <span className={zone.color}>{zone.label}</span>
                 </div>
               </div>

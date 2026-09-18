@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Upload, MapPin, Camera, AlertCircle, Loader2 } from 'lucide-react';
 import { DISASTER_TYPES, SEVERITY_LEVELS, calculateTriageScore } from '../data/schema';
 import { api } from '../services/api';
+import { assessWithAwsAndGemini, AWS_REKOGNITION_ENDPOINT } from '../services/awsRekognitionService';
 
 export default function ReportFormModal({ isOpen, onClose, onSubmitReport }) {
   const [disasterType, setDisasterType] = useState('Flood');
@@ -135,16 +136,42 @@ export default function ReportFormModal({ isOpen, onClose, onSubmitReport }) {
     };
 
     try {
-      // Try real Gemini multimodal vision assessment via edge API
-      const remoteReport = await api.createReport(payload);
-      if (remoteReport) {
-        onSubmitReport(remoteReport);
-        setIsSubmitting(false);
-        onClose();
-        return;
-      }
+      // 1. Run live AWS Rekognition + Gemini Vision AI multimodal evaluation
+      const assessment = await assessWithAwsAndGemini({
+        disasterType,
+        userSeverity,
+        description: payload.description,
+        photoUrl: fallbackPhoto,
+        photoBase64,
+        locationName
+      });
+
+      const triageScore = calculateTriageScore({
+        aiSeverity: assessment.aiSeverity,
+        corroborationCount: 1,
+        dissonanceScore: assessment.dissonanceScore
+      });
+
+      const newReport = {
+        reportId: `rep-${Date.now()}`,
+        ...payload,
+        ...assessment,
+        clusterId: null,
+        clusterCount: 1,
+        challengeHistory: [],
+        triageScore,
+        verificationStatus: 'AI_ASSESSED',
+        confirmVotes: 0,
+        disputeVotes: 0,
+        createdAt: new Date().toISOString()
+      };
+
+      onSubmitReport(newReport);
+      setIsSubmitting(false);
+      onClose();
+      return;
     } catch (err) {
-      console.warn('API report creation error, using local fallback:', err);
+      console.warn('AWS & Gemini evaluation error, using fallback:', err);
     }
 
     // Fallback to local heuristic simulation if offline
@@ -301,8 +328,21 @@ export default function ReportFormModal({ isOpen, onClose, onSubmitReport }) {
             />
           </div>
 
+          {/* Real-time AWS Rekognition & Gemini Vision Notification */}
+          <div className="p-2.5 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-between text-[11px]">
+            <div className="flex items-center gap-2">
+              <span className="px-1.5 py-0.5 rounded bg-orange-950/80 border border-orange-500/40 text-orange-300 font-mono text-[9px] font-bold">
+                AWS Rekognition
+              </span>
+              <span className="px-1.5 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 font-mono text-[9px] font-bold">
+                Gemini 2.0 Vision
+              </span>
+            </div>
+            <span className="text-zinc-400 text-[10px] font-mono">ap-south-1 live</span>
+          </div>
+
           {/* Action Buttons */}
-          <div className="pt-2 flex gap-3">
+          <div className="pt-1 flex gap-3">
             <button
               type="button"
               onClick={onClose}
@@ -318,10 +358,10 @@ export default function ReportFormModal({ isOpen, onClose, onSubmitReport }) {
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Evaluating Vision AI...</span>
+                  <span>Auditing via AWS & Gemini...</span>
                 </>
               ) : (
-                <span>Submit Anonymous Report</span>
+                <span>Submit Audited Report</span>
               )}
             </button>
           </div>

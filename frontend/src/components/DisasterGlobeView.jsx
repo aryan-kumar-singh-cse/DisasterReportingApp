@@ -11,6 +11,8 @@ import {
   Bot,
   ExternalLink,
   LocateFixed,
+  ZoomIn,
+  ZoomOut,
   X
 } from 'lucide-react';
 
@@ -32,10 +34,12 @@ export default function DisasterGlobeView({
   onOpenLightning = null,
   onOpenChat = null,
   userGPS = null,
-  onUserLocationFound = null
+  onUserLocationFound = null,
+  searchLocation = null
 }) {
   const mountRef = useRef(null);
   const globeGroupRef = useRef(null);
+  const cameraRef = useRef(null);
   const [hoveredReport, setHoveredReport] = useState(null);
   const [isLocatingGPS, setIsLocatingGPS] = useState(false);
   const [activeUserGPS, setActiveUserGPS] = useState(userGPS || null);
@@ -43,6 +47,57 @@ export default function DisasterGlobeView({
   const [webGlSupported, setWebGlSupported] = useState(true);
 
   const rotateToCoordsRef = useRef(null);
+
+  // Sync external userGPS prop into local active state and focus
+  useEffect(() => {
+    if (userGPS) {
+      setActiveUserGPS(userGPS);
+      if (rotateToCoordsRef.current) {
+        rotateToCoordsRef.current(userGPS.lat, userGPS.lng);
+      }
+      if (cameraRef.current) {
+        cameraRef.current.position.z = 3.9;
+      }
+    }
+  }, [userGPS]);
+
+  // Sync external searchLocation prop and smoothly fly to & zoom on searched location
+  useEffect(() => {
+    if (searchLocation && typeof searchLocation.lat === 'number' && typeof searchLocation.lng === 'number') {
+      if (rotateToCoordsRef.current) {
+        rotateToCoordsRef.current(searchLocation.lat, searchLocation.lng);
+      }
+      if (cameraRef.current) {
+        cameraRef.current.position.z = 3.8;
+      }
+      setLiveGpsNotification({
+        title: `📍 Searched: ${searchLocation.name}`,
+        coords: `${searchLocation.lat.toFixed(4)}°N, ${searchLocation.lng.toFixed(4)}°E`,
+        lat: searchLocation.lat,
+        lng: searchLocation.lng,
+        isSearched: true,
+        report: {
+          locationName: searchLocation.name,
+          latitude: searchLocation.lat,
+          longitude: searchLocation.lng,
+          disasterType: 'SEARCH TARGET',
+          description: `Focused search: ${searchLocation.name} (${[searchLocation.district, searchLocation.state, searchLocation.country].filter(Boolean).join(', ')})`
+        }
+      });
+    }
+  }, [searchLocation]);
+
+  const handleZoomIn = () => {
+    if (cameraRef.current) {
+      cameraRef.current.position.z = Math.max(2.8, cameraRef.current.position.z - 0.6);
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (cameraRef.current) {
+      cameraRef.current.position.z = Math.min(8.0, cameraRef.current.position.z + 0.6);
+    }
+  };
 
   // Live GPS locator on the 3D globe (WeatherGPT behavior)
   const handleGlobeGPS = () => {
@@ -114,7 +169,9 @@ export default function DisasterGlobeView({
 
       // Camera setup
       const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-      camera.position.set(0, 0, 5.7);
+      const initialZ = searchLocation ? 3.8 : 5.7;
+      camera.position.set(0, 0, initialZ);
+      cameraRef.current = camera;
 
       // Renderer setup
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -261,8 +318,50 @@ export default function DisasterGlobeView({
       markerObjects.push(userGpsMarker);
     }
 
-    // Default rotation centering (first report or SRM Modinagar)
-    const initialTarget = selectedReport || reports[0] || { latitude: 28.8354, longitude: 77.5847 };
+    // Searched Location 3D Beacon on Globe
+    let searchMarker = null;
+    if (searchLocation && typeof searchLocation.lat === 'number' && typeof searchLocation.lng === 'number') {
+      const sPos = latLngToVector3(searchLocation.lat, searchLocation.lng, 2.038);
+      const sRingGeo = new THREE.RingGeometry(0.045, 0.12, 32);
+      const sRingMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide, transparent: true, opacity: 0.95 });
+      const sRing = new THREE.Mesh(sRingGeo, sRingMat);
+      sRing.rotation.x = Math.PI / 2;
+
+      const sStemGeo = new THREE.CylinderGeometry(0.015, 0.015, 0.18, 12);
+      const sStemMat = new THREE.MeshBasicMaterial({ color: 0x0284c7 });
+      const sStem = new THREE.Mesh(sStemGeo, sStemMat);
+
+      const sDotGeo = new THREE.SphereGeometry(0.065, 16, 16);
+      const sDotMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+      const sDot = new THREE.Mesh(sDotGeo, sDotMat);
+      sDot.position.y = 0.09;
+
+      searchMarker = new THREE.Group();
+      searchMarker.add(sRing);
+      searchMarker.add(sStem);
+      searchMarker.add(sDot);
+      searchMarker.position.copy(sPos);
+      searchMarker.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), sPos.clone().normalize());
+      searchMarker.userData = {
+        isSearchedLocation: true,
+        ring: sRing,
+        report: {
+          locationName: searchLocation.name,
+          latitude: searchLocation.lat,
+          longitude: searchLocation.lng,
+          disasterType: 'SEARCH TARGET',
+          description: `Searched location: ${searchLocation.name} (${[searchLocation.district, searchLocation.state, searchLocation.country].filter(Boolean).join(', ')})`,
+          createdAt: new Date().toISOString()
+        }
+      };
+      globeGroup.add(searchMarker);
+      markerObjects.push(searchMarker);
+    }
+
+    // Default rotation centering (searched location first, or selected report, or first report)
+    const initialTarget = (searchLocation && typeof searchLocation.lat === 'number')
+      ? { latitude: searchLocation.lat, longitude: searchLocation.lng }
+      : (selectedReport || reports[0] || { latitude: 28.8354, longitude: 77.5847 });
     const radLat = (initialTarget.latitude * Math.PI) / 180;
     const radLng = (initialTarget.longitude * Math.PI) / 180;
     globeGroup.rotation.y = -radLng - Math.PI / 2;
@@ -303,7 +402,7 @@ export default function DisasterGlobeView({
         const intersects = raycaster.intersectObjects(markerObjects, true);
         if (intersects.length > 0) {
           let obj = intersects[0].object;
-          while (obj.parent && !obj.userData?.report && !obj.userData?.isUserGPS) {
+          while (obj.parent && !obj.userData?.report && !obj.userData?.isUserGPS && !obj.userData?.isSearchedLocation) {
             obj = obj.parent;
           }
           const rep = obj.userData?.report;
@@ -348,7 +447,7 @@ export default function DisasterGlobeView({
           const intersects = raycaster.intersectObjects(markerObjects, true);
           if (intersects.length > 0) {
             let obj = intersects[0].object;
-            while (obj.parent && !obj.userData?.report && !obj.userData?.isUserGPS) {
+            while (obj.parent && !obj.userData?.report && !obj.userData?.isUserGPS && !obj.userData?.isSearchedLocation) {
               obj = obj.parent;
             }
             const rep = obj.userData?.report;
@@ -436,7 +535,7 @@ export default function DisasterGlobeView({
       console.warn('WebGL initialization caught error, falling back:', err);
       setWebGlSupported(false);
     }
-  }, [reports, activeUserGPS]);
+  }, [reports, activeUserGPS, searchLocation]);
 
   if (!webGlSupported) {
     return (
@@ -465,6 +564,26 @@ export default function DisasterGlobeView({
 
       {/* Floating Tactical Controls Toolbar (WeatherGPT Style) */}
       <div className="absolute top-3 right-3 z-30 flex items-center gap-2 bg-zinc-950/85 backdrop-blur-md p-1.5 rounded-xl border border-zinc-800 shadow-2xl flex-wrap justify-end">
+        {/* Zoom In / Zoom Out Controls */}
+        <div className="flex items-center bg-zinc-900 rounded-lg border border-zinc-800 p-0.5">
+          <button
+            type="button"
+            onClick={handleZoomIn}
+            title="Zoom In 3D Globe"
+            className="p-1 rounded text-zinc-300 hover:text-white hover:bg-zinc-800 transition cursor-pointer"
+          >
+            <ZoomIn className="w-3.5 h-3.5 text-cyan-400" />
+          </button>
+          <button
+            type="button"
+            onClick={handleZoomOut}
+            title="Zoom Out 3D Globe"
+            className="p-1 rounded text-zinc-300 hover:text-white hover:bg-zinc-800 transition cursor-pointer"
+          >
+            <ZoomOut className="w-3.5 h-3.5 text-zinc-400" />
+          </button>
+        </div>
+
         {/* Live GPS Button (Moves Globe to User & Opens Radar) */}
         <button
           type="button"
@@ -525,7 +644,7 @@ export default function DisasterGlobeView({
         )}
       </div>
 
-      {/* GPS Acquired Notification Card */}
+      {/* GPS / Location Acquired Notification Card */}
       {liveGpsNotification && (
         <div className="absolute top-16 left-4 z-30 p-3.5 rounded-2xl bg-zinc-950/90 border border-cyan-500/50 backdrop-blur-xl shadow-2xl max-w-sm animate-fade-in flex items-start justify-between gap-3">
           <div>
@@ -534,9 +653,27 @@ export default function DisasterGlobeView({
               <span>{liveGpsNotification.title}</span>
             </div>
             <p className="text-[11px] font-mono text-zinc-400">{liveGpsNotification.coords}</p>
-            <p className="text-[11px] text-zinc-300 mt-1">
-              3D Globe aligned to your coordinates. Doppler radar updates active.
+            <p className="text-[11px] text-zinc-300 mt-1 mb-2">
+              3D Globe centered and focused on coordinates.
             </p>
+            {onOpenRadar && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (liveGpsNotification.report) onOpenRadar(liveGpsNotification.report);
+                  else if (liveGpsNotification.lat && liveGpsNotification.lng) {
+                    onOpenRadar({
+                      locationName: liveGpsNotification.title,
+                      latitude: liveGpsNotification.lat,
+                      longitude: liveGpsNotification.lng
+                    });
+                  }
+                }}
+                className="py-1 px-2.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-[11px] font-bold flex items-center gap-1.5 cursor-pointer shadow transition"
+              >
+                <span>🌧️ Open Live Radar Here</span>
+              </button>
+            )}
           </div>
           <button
             onClick={() => setLiveGpsNotification(null)}

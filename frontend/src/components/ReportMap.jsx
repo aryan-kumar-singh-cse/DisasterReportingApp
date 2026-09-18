@@ -50,27 +50,36 @@ function MapResizeHandler({ selectedReportId }) {
   return null;
 }
 
-// Smooth camera controller when selecting reports or flying to GPS / search target
-function MapFlyController({ selectedReport, flyTarget }) {
+// Smooth camera controller when selecting reports, searching location, or flying to GPS target
+function MapFlyController({ selectedReport, searchLocation, flyTarget }) {
   const map = useMap();
 
   useEffect(() => {
-    if (selectedReport && typeof selectedReport.latitude === 'number' && typeof selectedReport.longitude === 'number') {
-      map.flyTo([selectedReport.latitude, selectedReport.longitude], 14, {
-        duration: 1.2,
+    if (searchLocation && typeof searchLocation.lat === 'number' && typeof searchLocation.lng === 'number') {
+      map.flyTo([searchLocation.lat, searchLocation.lng], 14, {
+        duration: 1.5,
         easeLinearity: 0.25
       });
     }
-  }, [selectedReport, map]);
+  }, [searchLocation, map]);
 
   useEffect(() => {
-    if (flyTarget && typeof flyTarget.lat === 'number' && typeof flyTarget.lng === 'number') {
+    if (flyTarget && typeof flyTarget.lat === 'number' && typeof flyTarget.lng === 'number' && !searchLocation) {
       map.flyTo([flyTarget.lat, flyTarget.lng], flyTarget.zoom || 14, {
         duration: 1.5,
         easeLinearity: 0.25
       });
     }
-  }, [flyTarget, map]);
+  }, [flyTarget, map, searchLocation]);
+
+  useEffect(() => {
+    if (selectedReport && typeof selectedReport.latitude === 'number' && typeof selectedReport.longitude === 'number' && !searchLocation) {
+      map.flyTo([selectedReport.latitude, selectedReport.longitude], 14, {
+        duration: 1.2,
+        easeLinearity: 0.25
+      });
+    }
+  }, [selectedReport, map, searchLocation]);
 
   return null;
 }
@@ -207,6 +216,13 @@ export default function ReportMap({
   const [recenterFn, setRecenterFn] = useState(null);
   const [isLocatingGPS, setIsLocatingGPS] = useState(false);
   const [userGpsPosition, setUserGpsPosition] = useState(userGPS || null);
+
+  // Sync external userGPS prop into local state
+  useEffect(() => {
+    if (userGPS) {
+      setUserGpsPosition(userGPS);
+    }
+  }, [userGPS]);
 
   const handleLiveGPS = () => {
     if (!navigator.geolocation) {
@@ -369,7 +385,8 @@ export default function ReportMap({
         <MapResizeHandler selectedReportId={selectedReport?.reportId} />
         <MapFlyController
           selectedReport={selectedReport}
-          flyTarget={userGpsPosition || (searchLocation ? { lat: searchLocation.lat, lng: searchLocation.lng, zoom: 14 } : null)}
+          searchLocation={searchLocation}
+          flyTarget={userGpsPosition}
         />
         <RecenterController reports={reports} onRecenterReady={setRecenterFn} />
 
@@ -415,28 +432,44 @@ export default function ReportMap({
           </Marker>
         )}
 
-        {/* Target Search Marker */}
+        {/* Target Searched Location Marker with High Visibility Radar Beacon */}
         {searchLocation && (
           <Marker
             position={[searchLocation.lat, searchLocation.lng]}
             icon={L.divIcon({
-              className: 'custom-disaster-marker',
+              className: 'custom-search-marker',
               html: `
-                <div style="position: relative; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;">
-                  <div style="position: absolute; width: 34px; height: 34px; border-radius: 50%; background: rgba(16, 185, 129, 0.4); animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
-                  <div style="width: 14px; height: 14px; border-radius: 50%; background: #10b981; border: 2.5px solid #ffffff; box-shadow: 0 0 12px #10b981;"></div>
+                <div style="position: relative; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;">
+                  <div style="position: absolute; width: 42px; height: 42px; border-radius: 50%; background: rgba(14, 165, 233, 0.45); animation: ping 1.2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+                  <div style="position: absolute; width: 28px; height: 28px; border-radius: 50%; background: rgba(56, 189, 248, 0.6);"></div>
+                  <div style="width: 18px; height: 18px; border-radius: 50%; background: #0284c7; border: 2.5px solid #ffffff; box-shadow: 0 0 16px #38bdf8; display: flex; align-items: center; justify-content: center; font-size: 10px;">📍</div>
                 </div>
               `,
-              iconSize: [34, 34],
-              iconAnchor: [17, 17]
+              iconSize: [42, 42],
+              iconAnchor: [21, 21],
+              popupAnchor: [0, -20]
             })}
           >
-            <Popup className="dark-popup">
-              <div className="p-1 text-xs text-zinc-100">
-                <span className="font-bold text-emerald-400 block mb-1">📍 {searchLocation.name || 'Searched Hub'}</span>
-                <span className="text-[10px] font-mono text-zinc-300 block">
+            <Popup className="dark-popup" autoPan={true}>
+              <div className="p-1.5 text-xs text-zinc-100">
+                <span className="font-bold text-sky-400 block mb-1">📍 Searched: {searchLocation.name || 'Searched Location'}</span>
+                <span className="text-[10px] font-mono text-zinc-300 block mb-1">
                   {searchLocation.lat.toFixed(4)}°N, {searchLocation.lng.toFixed(4)}°E
                 </span>
+                {searchLocation.state && (
+                  <span className="text-[10px] text-zinc-400 block mb-2">
+                    {[searchLocation.district, searchLocation.state, searchLocation.country].filter(Boolean).join(', ')}
+                  </span>
+                )}
+                {onOpenRadar && (
+                  <button
+                    type="button"
+                    onClick={() => onOpenRadar({ locationName: searchLocation.name, latitude: searchLocation.lat, longitude: searchLocation.lng })}
+                    className="w-full py-1.5 px-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer shadow-md transition"
+                  >
+                    <span>🌧️ Open Live Radar for {searchLocation.name}</span>
+                  </button>
+                )}
               </div>
             </Popup>
           </Marker>

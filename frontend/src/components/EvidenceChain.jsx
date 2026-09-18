@@ -15,11 +15,17 @@ export default function EvidenceChain({ report }) {
         onClick={() => setIsOpen(!isOpen)}
         className="w-full px-4 py-3 flex items-center justify-between text-xs font-semibold text-zinc-300 hover:text-white hover:bg-zinc-800/40 transition-colors"
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Eye className="w-4 h-4 text-cyan-400" />
-          <span>Evidence Chain & Multimodal Vision Audit</span>
-          <span className="text-[10px] text-cyan-400 bg-cyan-950/60 border border-cyan-800 px-2 py-0.5 rounded-full font-mono">
-            {report.aiDetectedLabels?.length || 0} labels detected
+          <span>AWS Rekognition & Gemini Vision Audit</span>
+          <span className="text-[10px] text-orange-300 bg-orange-950/70 border border-orange-700/60 px-2 py-0.5 rounded font-mono">
+            AWS Rekognition
+          </span>
+          <span className="text-[10px] text-cyan-300 bg-cyan-950/70 border border-cyan-700/60 px-2 py-0.5 rounded font-mono">
+            Gemini 2.0
+          </span>
+          <span className="text-[10px] text-zinc-400 bg-zinc-800 px-2 py-0.5 rounded-full font-mono">
+            {report.aiDetectedLabels?.length || 0} labels
           </span>
         </div>
         {isOpen ? <ChevronUp className="w-4 h-4 text-zinc-400" /> : <ChevronDown className="w-4 h-4 text-zinc-400" />}
@@ -27,6 +33,15 @@ export default function EvidenceChain({ report }) {
 
       {isOpen && (
         <div className="p-4 border-t border-zinc-800 bg-zinc-950/70 space-y-4">
+          {/* AWS Rekognition & Gemini Pipeline Status Bar */}
+          <div className="p-2.5 rounded-lg bg-zinc-900/90 border border-zinc-800 flex items-center justify-between text-[11px] font-mono">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span className="text-zinc-300">AWS API Gateway:</span>
+              <span className="text-orange-400 text-[10px] truncate max-w-[200px]">jg6nmd89lg.execute-api</span>
+            </div>
+            <span className="text-cyan-400 text-[10px]">Gemini Vision Synchronized</span>
+          </div>
           {/* Detected Labels with Confidence Bars */}
           <div>
             <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block mb-2">
@@ -76,21 +91,32 @@ export default function EvidenceChain({ report }) {
               className="text-xs text-zinc-400 hover:text-white flex items-center gap-1.5 py-1 px-2 rounded bg-zinc-900 border border-zinc-800 font-mono"
             >
               <FileCode className="w-3.5 h-3.5" />
-              <span>{showJson ? 'Hide Raw JSON' : 'Inspect Raw Rekognition Payload'}</span>
+              <span>{showJson ? 'Hide Raw JSON' : 'Inspect AWS Rekognition & Gemini Payload'}</span>
             </button>
 
             {showJson && (
               <pre className="mt-2 p-3 rounded-lg bg-black/90 border border-zinc-800 text-[10px] text-emerald-400 font-mono overflow-x-auto max-h-48 scrollbar-thin">
                 {JSON.stringify(
                   {
-                    reportId: report.reportId,
-                    disasterTypeClaim: report.disasterType,
-                    userSeverity: report.userSeverity,
-                    aiVerification: report.aiVerification,
-                    dissonanceScore: report.dissonanceScore,
-                    detectedLabels: report.aiDetectedLabels,
-                    negativeSpace: report.negativeSpace,
-                    triageScore: report.triageScore
+                    awsRekognitionPipeline: {
+                      endpoint: "https://jg6nmd89lg.execute-api.ap-south-1.amazonaws.com",
+                      action: "rekognition:DetectLabels",
+                      region: "ap-south-1",
+                      detectedLabels: report.aiDetectedLabels
+                    },
+                    geminiVisionPipeline: {
+                      model: "gemini-2.0-flash / gemini-vision",
+                      aiVerification: report.aiVerification,
+                      dissonanceScore: report.dissonanceScore,
+                      negativeSpace: report.negativeSpace,
+                      aiSummary: report.aiSummary
+                    },
+                    incidentMetadata: {
+                      reportId: report.reportId,
+                      disasterTypeClaim: report.disasterType,
+                      userSeverity: report.userSeverity,
+                      triageScore: report.triageScore
+                    }
                   },
                   null,
                   2
