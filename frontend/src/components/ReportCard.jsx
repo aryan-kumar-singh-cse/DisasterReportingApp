@@ -1,5 +1,4 @@
-import { generateTacticalBriefing } from '../services/groqService';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ThumbsUp,
   ThumbsDown,
