@@ -277,6 +277,7 @@ export default function App() {
                 hasVoted={!!userVotes[selectedReport.reportId]}
                 onOpenRadar={handleOpenRadar}
                 onOpenLightning={handleOpenLightning}
+                onOpenChat={() => setIsChatModalOpen(true)}
               />
             </div>
           )}
@@ -320,6 +321,7 @@ export default function App() {
                   hasVoted={!!userVotes[selectedReport.reportId]}
                   onOpenRadar={handleOpenRadar}
                   onOpenLightning={handleOpenLightning}
+                  onOpenChat={() => setIsChatModalOpen(true)}
                 />
               </div>
             )}

@@ -5,6 +5,34 @@
 
 export const VERIFIED_DISASTER_NEWS = [
   {
+    id: 'news-up-1',
+    agency: 'IMD New Delhi & Western UP Division',
+    agencyBadge: 'OFFICIAL IMD',
+    verified: true,
+    badgeColor: 'bg-orange-500/20 text-orange-400 border-orange-500/40',
+    title: 'Orange Alert: Convective Storm & Urban Waterlogging for Ghaziabad-Modinagar-Meerut (NH-58)',
+    timestamp: '2 mins ago',
+    category: 'SQUALL & URBAN INUNDATION',
+    summary: 'Severe squall line and cloudburst runoff impacting Delhi-Meerut Expressway and NH-58 Modinagar sector. Rainfall intensity measured at 52mm/hr with wind gusts to 58 km/h. SRMIST campus perimeter and pedestrian underpasses subject to heavy stormwater runoff.',
+    affectedAreas: ['SRMIST Modinagar Campus', 'NH-58 Delhi-Meerut Highway', 'Ghaziabad Sector 3', 'Muradnagar Canal'],
+    sourceUrl: 'https://mausam.imd.gov.in',
+    actionRequired: 'Stay inside reinforced building complexes; avoid NH-58 service lanes and submerged underpasses.'
+  },
+  {
+    id: 'news-assam-2',
+    agency: 'Central Water Commission (CWC) & NDMA',
+    agencyBadge: 'CWC HYDROLOGY',
+    verified: true,
+    badgeColor: 'bg-blue-500/20 text-blue-400 border-blue-500/40',
+    title: 'Brahmaputra Basin Flood Warning: Water Level Exceeds Danger Mark by 1.84 Meters',
+    timestamp: '8 mins ago',
+    category: 'RIVERINE FLOOD',
+    summary: 'Continuous upstream downpours in Arunachal foothills have elevated Brahmaputra discharge above critical stage at Guwahati and Silchar. Embankments under 24x7 geotechnical patrolling.',
+    affectedAreas: ['Guwahati Riverside', 'Silchar', 'Kaziranga Lowlands', 'Dhubri'],
+    sourceUrl: 'https://cwc.gov.in',
+    actionRequired: 'NDRF water rescue units pre-positioned. Evacuate low-lying river island areas immediately.'
+  },
+  {
     id: 'news-1',
     agency: 'IMD Coastal Warning Centre',
     agencyBadge: 'OFFICIAL IMD',

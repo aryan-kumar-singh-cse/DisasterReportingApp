@@ -17,24 +17,24 @@ import {
 import { askCrisisAgent } from '../services/groqService';
 
 const SUGGESTED_PROMPTS = [
+  { text: "🏫 SRM Modinagar Live Crisis Status", icon: ShieldAlert },
   { text: "🌊 Flash Flood Evacuation Protocol", icon: CloudRain },
   { text: "🔥 High-Rise Fire Safety Rules", icon: Flame },
-  { text: "⚡ Lightning Strike Survival Guidelines", icon: Zap },
-  { text: "📋 Active Incident Triage Directives", icon: ShieldAlert }
+  { text: "⚡ Lightning Strike Survival Guidelines", icon: Zap }
 ];
 
 export default function CrisisChatModal({
   isOpen,
   onClose,
-  currentLocation = 'Mumbai Sector',
+  currentLocation = 'Active Incident Sector',
   selectedReport = null
 }) {
   const [messages, setMessages] = useState([
     {
       id: 'init-1',
       role: 'assistant',
-      content: `🛡️ **ResQ Tactical AI Active** (Powered by Groq 120B & Gemini Agents)\n\nI am your live crisis intelligence dispatch agent. Ask me about emergency procedures, evacuation routing, triage directives, or convective weather risks for **${currentLocation}**.`,
-      agent: 'Groq 120B Dispatch Agent'
+      content: `🛡️ **ResQ AI Crisis Intelligence Engine Active** (Powered by Groq & Google AI)\n\nI am your live emergency assistant. Ask me about real-time disaster conditions for any campus or city (e.g., **SRM Modinagar**, **Mumbai**, **Delhi-NCR**), evacuation routing, emergency shelter coordinates, or live weather hazard guidance.`,
+      agent: 'Groq AI Tactical Core'
     }
   ]);
   const [inputValue, setInputValue] = useState('');
@@ -72,8 +72,8 @@ export default function CrisisChatModal({
       const aiMsg = {
         id: `ai-${Date.now()}`,
         role: 'assistant',
-        content: res?.response || 'ResQ Emergency protocol: stay sheltered and monitor 112.',
-        agent: res?.agent || 'Groq 120B Tactical Agent'
+        content: res?.response || 'ResQ Emergency protocol: stay sheltered and monitor national emergency 112.',
+        agent: res?.agent || 'Groq AI Tactical Agent'
       };
       setMessages((prev) => [...prev, aiMsg]);
     } catch {
@@ -82,7 +82,7 @@ export default function CrisisChatModal({
         {
           id: `ai-${Date.now()}`,
           role: 'assistant',
-          content: '⚠️ Connection timeout. For immediate peril dial 112. Follow NDMA safety guidelines.',
+          content: '⚠️ Connection timeout. For immediate peril dial national emergency **112**. Follow NDMA safety guidelines.',
           agent: 'ResQ Fail-Safe'
         }
       ]);
@@ -103,8 +103,8 @@ export default function CrisisChatModal({
       {
         id: `init-${Date.now()}`,
         role: 'assistant',
-        content: `🛡️ **ResQ Tactical AI Initialized**\nReady for crisis inquiries regarding **${currentLocation}**.`,
-        agent: 'Groq 120B Dispatch Agent'
+        content: `🛡️ **ResQ AI Crisis Intelligence Core Reset**\nReady for crisis inquiries across any campus, district, or sector.`,
+        agent: 'Groq AI Tactical Core'
       }
     ]);
   };
@@ -122,14 +122,14 @@ export default function CrisisChatModal({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold text-white font-mono">ResQ Crisis GPT Agent</h2>
+                <h2 className="text-base font-bold text-white font-mono">ResQ Crisis AI Assistant</h2>
                 <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-mono">
-                  Groq 120B / Gemini
+                  Groq / Google AI
                 </span>
               </div>
               <p className="text-xs text-zinc-400 font-mono flex items-center gap-1">
-                <MapPin className="w-3 h-3 text-cyan-400" />
-                <span>Sector: {selectedReport?.locationName || currentLocation}</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                <span>Global Crisis Intelligence Grid • Active Telemetry</span>
               </p>
             </div>
           </div>
@@ -233,7 +233,7 @@ export default function CrisisChatModal({
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={`Ask ResQ anything about disaster procedures or ${selectedReport?.locationName || currentLocation}...`}
+              placeholder="Ask ResQ anything (e.g. SRM Modinagar live disaster updates, flood safety, shelter coordinates)..."
               className="w-full pl-4 pr-12 py-3 bg-zinc-950 border border-zinc-700/80 focus:border-cyan-400 rounded-2xl text-xs text-white placeholder-zinc-500 outline-none transition-all shadow-inner"
             />
             <button

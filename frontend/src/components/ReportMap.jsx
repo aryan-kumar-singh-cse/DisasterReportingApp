@@ -391,15 +391,24 @@ export default function ReportMap({
             })}
           >
             <Popup className="dark-popup">
-              <div className="p-1 text-xs text-zinc-100">
+              <div className="p-1.5 text-xs text-zinc-100">
                 <span className="font-bold text-cyan-400 block mb-1">🎯 Your Exact GPS Position</span>
-                <span className="text-[10px] font-mono text-zinc-300 block">
+                <span className="text-[10px] font-mono text-zinc-300 block mb-1">
                   {userGpsPosition.lat.toFixed(5)}°N, {userGpsPosition.lng.toFixed(5)}°E
                 </span>
                 {userGpsPosition.accuracy && (
-                  <span className="text-[9px] text-zinc-400 font-mono">
+                  <span className="text-[9px] text-zinc-400 font-mono block mb-2">
                     Accuracy: ±{Math.round(userGpsPosition.accuracy)}m
                   </span>
+                )}
+                {onOpenRadar && (
+                  <button
+                    type="button"
+                    onClick={() => onOpenRadar({ locationName: 'Your Live GPS Location', latitude: userGpsPosition.lat, longitude: userGpsPosition.lng })}
+                    className="w-full py-1.5 px-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer shadow-md transition"
+                  >
+                    <span>🌧️ Open Live Radar for My Location</span>
+                  </button>
                 )}
               </div>
             </Popup>
@@ -472,13 +481,27 @@ export default function ReportMap({
                     "{rep.description}"
                   </p>
 
-                  <button
-                    type="button"
-                    onClick={() => onSelectReport(rep)}
-                    className="w-full py-1.5 text-center bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-lg text-xs font-bold shadow transition-all"
-                  >
-                    Open Deep Assessment
-                  </button>
+                  <div className="grid grid-cols-2 gap-1.5 mt-2">
+                    <button
+                      type="button"
+                      onClick={() => onSelectReport(rep)}
+                      className="py-1.5 text-center bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg text-xs font-semibold shadow transition-all cursor-pointer"
+                    >
+                      Assessment
+                    </button>
+                    {onOpenRadar && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onSelectReport(rep);
+                          onOpenRadar(rep);
+                        }}
+                        className="py-1.5 text-center bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-bold shadow transition-all cursor-pointer flex items-center justify-center gap-1"
+                      >
+                        <span>🌧️ Radar</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
               </Popup>
             </Marker>

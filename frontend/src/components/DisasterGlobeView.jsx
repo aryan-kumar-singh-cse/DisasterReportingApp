@@ -223,26 +223,39 @@ export default function DisasterGlobeView({
     let userGpsMarker = null;
     if (activeUserGPS) {
       const uPos = latLngToVector3(activeUserGPS.lat, activeUserGPS.lng, 2.035);
-      const uRingGeo = new THREE.RingGeometry(0.04, 0.09, 24);
-      const uRingMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, side: THREE.DoubleSide, transparent: true, opacity: 0.9 });
+      const uRingGeo = new THREE.RingGeometry(0.04, 0.1, 28);
+      const uRingMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, side: THREE.DoubleSide, transparent: true, opacity: 0.95 });
       const uRing = new THREE.Mesh(uRingGeo, uRingMat);
       uRing.rotation.x = Math.PI / 2;
 
-      const uDotGeo = new THREE.SphereGeometry(0.05, 16, 16);
+      const uDotGeo = new THREE.SphereGeometry(0.055, 16, 16);
       const uDotMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
       const uDot = new THREE.Mesh(uDotGeo, uDotMat);
-      uDot.position.y = 0.05;
+      uDot.position.y = 0.06;
 
       userGpsMarker = new THREE.Group();
       userGpsMarker.add(uRing);
       userGpsMarker.add(uDot);
       userGpsMarker.position.copy(uPos);
       userGpsMarker.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), uPos.clone().normalize());
+      userGpsMarker.userData = {
+        isUserGPS: true,
+        ring: uRing,
+        report: {
+          locationName: 'Your Live GPS Location',
+          latitude: activeUserGPS.lat,
+          longitude: activeUserGPS.lng,
+          disasterType: 'LIVE GPS',
+          description: 'Live GPS Pin located on 3D Planetary Globe',
+          createdAt: new Date().toISOString()
+        }
+      };
       globeGroup.add(userGpsMarker);
+      markerObjects.push(userGpsMarker);
     }
 
-    // Default rotation centering (Mumbai or selected report)
-    const initialTarget = selectedReport || reports[0] || { latitude: 19.076, longitude: 72.877 };
+    // Default rotation centering (first report or SRM Modinagar)
+    const initialTarget = selectedReport || reports[0] || { latitude: 28.8354, longitude: 77.5847 };
     const radLat = (initialTarget.latitude * Math.PI) / 180;
     const radLng = (initialTarget.longitude * Math.PI) / 180;
     globeGroup.rotation.y = -radLng - Math.PI / 2;
@@ -260,11 +273,13 @@ export default function DisasterGlobeView({
 
     // Drag interaction
     let isDragging = false;
+    let dragStartPos = { x: 0, y: 0 };
     let prevMousePos = { x: 0, y: 0 };
     let dragVelocity = { x: 0, y: 0 };
 
     const onPointerDown = (e) => {
       isDragging = true;
+      dragStartPos = { x: e.clientX, y: e.clientY };
       prevMousePos = { x: e.clientX, y: e.clientY };
       dragVelocity = { x: 0, y: 0 };
     };
@@ -281,11 +296,12 @@ export default function DisasterGlobeView({
         const intersects = raycaster.intersectObjects(markerObjects, true);
         if (intersects.length > 0) {
           let obj = intersects[0].object;
-          while (obj.parent && !obj.userData?.report) {
+          while (obj.parent && !obj.userData?.report && !obj.userData?.isUserGPS) {
             obj = obj.parent;
           }
-          if (obj.userData?.report) {
-            setHoveredReport(obj.userData.report);
+          const rep = obj.userData?.report;
+          if (rep) {
+            setHoveredReport(rep);
             container.style.cursor = 'pointer';
             return;
           }
@@ -312,21 +328,37 @@ export default function DisasterGlobeView({
         isDragging = false;
         container.style.cursor = 'grab';
 
-        const rect = container.getBoundingClientRect();
-        const mouse = new THREE.Vector2(
-          ((e.clientX - rect.left) / width) * 2 - 1,
-          -((e.clientY - rect.top) / height) * 2 + 1
-        );
-        const raycaster = new THREE.Raycaster();
-        raycaster.setFromCamera(mouse, camera);
-        const intersects = raycaster.intersectObjects(markerObjects, true);
-        if (intersects.length > 0) {
-          let obj = intersects[0].object;
-          while (obj.parent && !obj.userData?.report) {
-            obj = obj.parent;
-          }
-          if (obj.userData?.report) {
-            onSelectReport(obj.userData.report);
+        const moveDist = Math.hypot(e.clientX - dragStartPos.x, e.clientY - dragStartPos.y);
+        // Only trigger click if movement was under 8px
+        if (moveDist < 8) {
+          const rect = container.getBoundingClientRect();
+          const mouse = new THREE.Vector2(
+            ((e.clientX - rect.left) / width) * 2 - 1,
+            -((e.clientY - rect.top) / height) * 2 + 1
+          );
+          const raycaster = new THREE.Raycaster();
+          raycaster.setFromCamera(mouse, camera);
+          const intersects = raycaster.intersectObjects(markerObjects, true);
+          if (intersects.length > 0) {
+            let obj = intersects[0].object;
+            while (obj.parent && !obj.userData?.report && !obj.userData?.isUserGPS) {
+              obj = obj.parent;
+            }
+            const rep = obj.userData?.report;
+            if (rep) {
+              onSelectReport(rep);
+              // Open radar directly on pin click just like WeatherGPT
+              if (onOpenRadar) {
+                onOpenRadar(rep);
+              }
+              setLiveGpsNotification({
+                title: rep.locationName,
+                coords: `${rep.latitude?.toFixed(4)}°N, ${rep.longitude?.toFixed(4)}°E`,
+                lat: rep.latitude,
+                lng: rep.longitude,
+                report: rep
+              });
+            }
           }
         }
       }
