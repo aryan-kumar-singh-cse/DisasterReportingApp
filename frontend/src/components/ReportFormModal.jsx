@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Upload, MapPin, Camera, AlertCircle, Loader2 } from 'lucide-react';
 import { DISASTER_TYPES, SEVERITY_LEVELS, calculateTriageScore } from '../data/schema';
+import { api } from '../services/api';
 
 export default function ReportFormModal({ isOpen, onClose, onSubmitReport }) {
   if (!isOpen) return null;
@@ -9,13 +10,14 @@ export default function ReportFormModal({ isOpen, onClose, onSubmitReport }) {
   const [userSeverity, setUserSeverity] = useState('High');
   const [description, setDescription] = useState('');
   const [photoUrl, setPhotoUrl] = useState('');
+  const [photoBase64, setPhotoBase64] = useState('');
   const [latitude, setLatitude] = useState(19.0760);
   const [longitude, setLongitude] = useState(72.8777);
   const [locationName, setLocationName] = useState('Mumbai, Maharashtra');
   const [isLocating, setIsLocating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Auto-detect browser geolocation
+  // Auto-detect browser geolocation with Nominatim Reverse Geocoding
   const handleGetLocation = () => {
     if (!navigator.geolocation) {
       alert('Geolocation is not supported by your browser.');
@@ -23,10 +25,31 @@ export default function ReportFormModal({ isOpen, onClose, onSubmitReport }) {
     }
     setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLatitude(pos.coords.latitude);
-        setLongitude(pos.coords.longitude);
-        setLocationName(`GPS: ${pos.coords.latitude.toFixed(3)}, ${pos.coords.longitude.toFixed(3)}`);
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        setLatitude(lat);
+        setLongitude(lng);
+
+        // Fetch real street / locality name from OpenStreetMap Nominatim
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+          if (res.ok) {
+            const data = await res.json();
+            const addr = data.address || {};
+            const suburb = addr.suburb || addr.neighbourhood || addr.subdistrict || addr.residential;
+            const city = addr.city || addr.town || addr.county || addr.state;
+            if (suburb && city) {
+              setLocationName(`${suburb}, ${city}`);
+            } else if (data.display_name) {
+              setLocationName(data.display_name.split(',').slice(0, 2).join(','));
+            } else {
+              setLocationName(`GPS: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+            }
+          }
+        } catch {
+          setLocationName(`GPS: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+        }
         setIsLocating(false);
       },
       (err) => {
@@ -37,12 +60,18 @@ export default function ReportFormModal({ isOpen, onClose, onSubmitReport }) {
     );
   };
 
-  // Handle local image file picker
+  // Handle local image file picker and convert to Base64 for Gemini Vision
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
       const localUrl = URL.createObjectURL(file);
       setPhotoUrl(localUrl);
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoBase64(reader.result);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -89,11 +118,36 @@ export default function ReportFormModal({ isOpen, onClose, onSubmitReport }) {
     };
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     const fallbackPhoto = photoUrl || 'https://images.unsplash.com/photo-1547683905-f686c993aae5?w=800&auto=format&fit=crop&q=60';
+    const payload = {
+      disasterType,
+      userSeverity,
+      description: description || `Reported ${disasterType} incident with visual documentation.`,
+      photoUrl: fallbackPhoto,
+      photoBase64,
+      latitude,
+      longitude,
+      locationName
+    };
+
+    try {
+      // Try real Gemini multimodal vision assessment via edge API
+      const remoteReport = await api.createReport(payload);
+      if (remoteReport) {
+        onSubmitReport(remoteReport);
+        setIsSubmitting(false);
+        onClose();
+        return;
+      }
+    } catch (err) {
+      console.warn('API report creation error, using local fallback:', err);
+    }
+
+    // Fallback to local heuristic simulation if offline
     const aiResult = simulateAiAssessment(disasterType, userSeverity);
     const triageScore = calculateTriageScore({
       aiSeverity: aiResult.aiSeverity,
@@ -103,13 +157,7 @@ export default function ReportFormModal({ isOpen, onClose, onSubmitReport }) {
 
     const newReport = {
       reportId: `rep-${Date.now()}`,
-      disasterType,
-      userSeverity,
-      description: description || `Reported ${disasterType} incident with visual documentation.`,
-      photoUrl: fallbackPhoto,
-      latitude,
-      longitude,
-      locationName,
+      ...payload,
       ...aiResult,
       clusterId: null,
       clusterCount: 1,
@@ -121,11 +169,9 @@ export default function ReportFormModal({ isOpen, onClose, onSubmitReport }) {
       createdAt: new Date().toISOString()
     };
 
-    setTimeout(() => {
-      onSubmitReport(newReport);
-      setIsSubmitting(false);
-      onClose();
-    }, 600);
+    onSubmitReport(newReport);
+    setIsSubmitting(false);
+    onClose();
   };
 
   return (

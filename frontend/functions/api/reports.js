@@ -1,4 +1,5 @@
 import { evaluateEvidence } from './services/aiEngine.js';
+import { assessImageWithGemini } from './services/geminiVision.js';
 import { applyClustering, calculateTriageScore } from './services/clustering.js';
 
 // Seed demo incidents for Cloudflare edge store
@@ -141,17 +142,14 @@ export async function onRequestPost(context) {
     const body = await context.request.json();
     const { disasterType, userSeverity, description, photoUrl, latitude, longitude, locationName } = body;
 
-    // Simulate smart visual detection
-    const sampleLabels = disasterType === 'Flood'
-      ? [{ name: 'Flood', confidence: 98 }, { name: 'Water', confidence: 95 }]
-      : disasterType === 'Fire'
-      ? [{ name: 'Smoke', confidence: 94 }, { name: 'Fire', confidence: 91 }]
-      : [{ name: 'Asphalt', confidence: 92 }, { name: 'Pothole', confidence: 85 }];
-
-    const assessment = evaluateEvidence({
+    // Run real Gemini multimodal vision analysis with automatic fallback
+    const assessment = await assessImageWithGemini({
+      apiKey: context.env?.GEMINI_API_KEY,
       disasterType,
       userSeverity,
-      labels: sampleLabels
+      description,
+      photoUrl,
+      photoBase64: body.photoBase64
     });
 
     const triageScore = calculateTriageScore({
